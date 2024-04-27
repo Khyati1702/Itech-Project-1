@@ -10,7 +10,7 @@
  
   <header class="main-header">
     <div class="logo-container">
-      <img class="header-title" src="Eximages/Sace_logo.png" alt="SACE Portal Logo">
+      <img class="header-title" src="images/Sace_logo.png" alt="SACE Portal Logo">
       <span class="header-title">SACE Portal</span>
     </div>
     <div class="nav-container">
@@ -19,14 +19,22 @@
       </nav>
       <div class="search-container">
         <input type="search" placeholder="Search">
+        
         <form action="logout.php" method="post">
     <button type="submit" class="logout-button">Logout</button>
 </form>
+
       </div>
+      
     </div>
   </header>
-
   <main>
+    <?php session_start();
+    if (!isset($_SESSION['Username'] )){
+header('location:Sace.php');
+    }
+    ?>
+    <h1>Welcome <?php echo $_SESSION['Username'] ?></h1> 
     <section class="courses-grid">
       <!-- Course Card 1 -->
       <article class="course-card">
@@ -101,11 +109,11 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <img src="Sace_logo.png" alt="SACE Portal Logo">
+      <img src="images/Sace_logo.png" alt="SACE Portal Logo">
       <p>Copyright &copy; Sace Student Portal</p>
     </div>
   </footer>
 
-<script src="scripts.js"></script>
+
 </body>
 </html>

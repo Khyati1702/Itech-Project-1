@@ -12,6 +12,8 @@
 
 <?php
 require_once 'vendor/autoload.php';
+session_start();
+
 
 // init configuration
 $clientID = '704453595817-2qrd8v8c2rhgl75qvv8iumu11864mo22.apps.googleusercontent.com';
@@ -27,6 +29,7 @@ $client->addScope("email");
 $client->addScope("profile");
 $googleLoginUrl = $client->createAuthUrl();
 
+
 // authenticate code from Google OAuth Flow
 if (isset($_GET['code'])) {
   $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
@@ -38,12 +41,13 @@ if (isset($_GET['code'])) {
   $email =  $google_account_info->email;
   $name =  $google_account_info->name;
 
-  // now you can use this profile info to create account in your website and make user logged in.
+  
+
 } else {
 ?>
 
     <div class="container" id="Login">
-       <div class="toplogin"><img src="Eximages/Sace_logo.png" alt="SACE Logo">
+       <div class="toplogin"><img src="images/Sace_logo.png" alt="SACE Logo">
         <h1 id="verticleline"></h1>
         <h1 id="sacename"><i>SACE Portal</i></h1>
     </div>
@@ -52,16 +56,22 @@ if (isset($_GET['code'])) {
        
          <h1 id="logintitle">Login</h1>
 
-         <form action="" method="post">
+         <form action="" method="POST">
         <div class="forumtext">
             <i class="fas fa-envelope"></i>
-            <input type="username" id="username" name="username" placeholder="USERNAME" required> 
+            <input type="email" id="username" name="username" placeholder="USERNAME" required> 
         </div>
         <div class="forumtext">
             <i class="fas fa-lock"></i>
             <input type="password" id="password" name="password" placeholder="PASSWORD" required>
             <i class="fas fa-sign-in"></i>  
-            <input type="submit" id="submitbtn" name="login" value="Log in">
+            <input type="submit" id="submitbtn" name="submit_btn" value="Log in">
+            <?php 
+            if(isset($_SESSION{'error'})) {
+                $errormsg=$_SESSION['error'];
+                echo $errormsg;
+                unset($_SESSION['error']);
+            } ?>
             <p id="passwordlost">
                 <a href="#">Lost Password?</a>
             </p>
@@ -74,10 +84,32 @@ if (isset($_GET['code'])) {
         <?php } ?>
          
     </form>
+</div> 
+<?php
+   include 'configure.php';
+  
+   
+    if(isset($_POST['submit_btn']))
+    {
+        $email=$_POST['username'];
+        $loginpass=$_POST['password'];
+        $select="SELECT * FROM users WHERE Username='$email' && Password='$loginpass'";
+        $query=mysqli_query($config,$select);
+        $row=mysqli_num_rows($query);
+        $get=mysqli_fetch_array($query);
+        if ($row==1){
+            $username=$get['Username'];
+            header ('location:Mainpage.php');
+            session_start();
+            $_SESSION['Username']=$username;
+        }
+        else{
+           $_SESSION['error']="<div style='background-color:black; color:White; padding:5px; margin:0px 150px 15px 150px;border:2px white solid'>Invalid Username or Password</div>";
+           header("location:Sace.php");
+        }
+    }
 
-
-    
-</div>
+    ?>
 <!--<div id="googlebtn">
             <input type="submit" id="googlebtn" name="googlebutton" value="Sign up with google">
             <i class="fab fa-google"></i>
