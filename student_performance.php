@@ -53,6 +53,18 @@ $gradesResult = $gradesQuery->get_result();
 if (!$gradesResult) {
     die('Execute failed: ' . $gradesQuery->error);
 }
+
+// Fetch exam scores
+$examScoresQuery = $config->prepare("SELECT es.Score, es.Comments, c.Name as Course FROM exam_scores es JOIN courses c ON es.CourseID = c.CourseID WHERE es.StudentID = ?");
+if (!$examScoresQuery) {
+    die('Prepare failed: ' . $config->error);
+}
+$examScoresQuery->bind_param("i", $UserID);
+$examScoresQuery->execute();
+$examScoresResult = $examScoresQuery->get_result();
+if (!$examScoresResult) {
+    die('Execute failed: ' . $examScoresQuery->error);
+}
 ?>
 
 <!DOCTYPE html>
@@ -63,7 +75,6 @@ if (!$gradesResult) {
     <title>Student Performance</title>
     <link rel="stylesheet" href="colors.css">
     <link rel="stylesheet" href="student_performance.css">
-    
 </head>
 <body>
     <header class="main-header">
@@ -74,8 +85,8 @@ if (!$gradesResult) {
         <div class="nav-container">
             <span class="menu-toggle" onclick="toggleMenu()">☰</span>
             <nav class="main-nav">
-                <a href="Mainpage.php">Home</a>
-                <a href="#">Services</a>
+            <a href="Mainpage.php">Home</a>
+                <a href="assignment.php">Grading</a>
                 <a href="Profile.php">Students</a>
                 <a href="#">Contact</a>
                 <a href="#">Help</a>
@@ -133,6 +144,28 @@ if (!$gradesResult) {
                         <td><?php echo htmlspecialchars($row['Grade']); ?></td>
                         <td><?php echo htmlspecialchars($row['Comments']); ?></td>
                         <td><?php echo htmlspecialchars($row['GradingTimestamp']); ?></td>
+                    </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h3>Exam Scores</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Score</th>
+                        <th>Comments</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($row = $examScoresResult->fetch_assoc()): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($row['Course']); ?></td>
+                        <td><?php echo htmlspecialchars($row['Score']); ?></td>
+                        <td><?php echo htmlspecialchars($row['Comments']); ?></td>
                     </tr>
                     <?php endwhile; ?>
                 </tbody>

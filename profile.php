@@ -37,8 +37,8 @@ $result = mysqli_query($config, $query);
         <div class="nav-container">
             <span class="menu-toggle" onclick="toggleMenu()">☰</span>
             <nav class="main-nav">
-                <a href="Mainpage.php">Home</a>
-                <a href="#">Services</a>
+            <a href="Mainpage.php">Home</a>
+                <a href="assignment.php">Grading</a>
                 <a href="Profile.php">Students</a>
                 <a href="#">Contact</a>
                 <a href="#">Help</a>
