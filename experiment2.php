@@ -6,7 +6,7 @@ session_start();
 // Google Client ID and Secret
 $clientID = '704453595817-2qrd8v8c2rhgl75qvv8iumu11864mo22.apps.googleusercontent.com';
 $clientSecret = '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';
-$redirectUri = 'http://localhost/DraftWebsite/Mainpage.html'; 
+$redirectUri = 'http://localhost/DraftWebsite/Mainpage.php'; 
 
 // Create Google Client
 $client = new Google_Client();

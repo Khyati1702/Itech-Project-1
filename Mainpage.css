@@ -35,6 +35,50 @@ main h1 {
     transform: translateY(0);
   }
 }
+.notification-icon {
+  font-size: 1.5rem;
+  color: var(--text-color);
+  cursor: pointer;
+  position: relative;
+}
+
+.notifications {
+  display: none;
+  position: absolute;
+  top: 50px;
+  right: 20px;
+  width: 300px;
+  background-color: var(--primary-color);
+  border: solid 2px var(--third-color);
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
+  z-index: 1000;
+}
+
+.notifications h3 {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  padding: 10px;
+  margin: 0;
+  border-bottom: solid 2px var(--third-color);
+}
+
+.notifications ul {
+  list-style: none;
+  padding: 10px;
+  margin: 0;
+}
+
+.notifications li {
+  padding: 10px;
+  border-bottom: solid 1px var(--third-color);
+  color: var(--text-color);
+}
+
+.notifications li:last-child {
+  border-bottom: none;
+}
+
 /* Header styles */
 .main-header {
   display: flex;

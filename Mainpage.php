@@ -21,7 +21,9 @@
                 <a href="Profile.php">Students</a>
                 <a href="#">Contact</a>
                 <a href="#">Help</a>
+               
             </nav>
+            
             <div class="search-container">
                 <input type="search" placeholder="Search">
                 <form action="logout.php" method="post">
@@ -29,6 +31,8 @@
                 </form>
             </div>
         </div>
+       
+
     </header>
 
     <main>
@@ -120,5 +124,7 @@
             console.log('Menu toggled.');
         }
     </script>
+   
 </body>
 </html>
+

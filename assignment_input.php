@@ -15,9 +15,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     // Validate inputs
     if (!empty($studentID) && !empty($assignmentID) && !empty($grade) && is_numeric($grade)) {
+        // Ensure that the SubmissionID corresponds to the correct student
         $query = $config->prepare("INSERT INTO gradings (SubmissionID, TeacherID, Grade, Comments) VALUES (?, ?, ?, ?)");
-        $query->bind_param("iiis", $assignmentID, $_SESSION['UserID'], $grade, $comments);
-        $query->execute();
+        $submissionIDQuery = $config->prepare("SELECT SubmissionID FROM submissions WHERE StudentID = ? AND AssignmentID = ?");
+        $submissionIDQuery->bind_param("ii", $studentID, $assignmentID);
+        $submissionIDQuery->execute();
+        $submissionResult = $submissionIDQuery->get_result();
+        if ($submissionRow = $submissionResult->fetch_assoc()) {
+            $submissionID = $submissionRow['SubmissionID'];
+            $query->bind_param("iiis", $submissionID, $_SESSION['UserID'], $grade, $comments);
+            $query->execute();
+        } else {
+            echo "Submission not found for this student and assignment.";
+        }
     }
 }
 
@@ -44,7 +54,7 @@ $assignments = $config->query("SELECT AssignmentID, Title FROM assignments");
         <div class="nav-container">
             <span class="menu-toggle" onclick="toggleMenu()">☰</span>
             <nav class="main-nav">
-            <a href="Mainpage.php">Home</a>
+                <a href="Mainpage.php">Home</a>
                 <a href="assignment.php">Grading</a>
                 <a href="Profile.php">Students</a>
                 <a href="#">Contact</a>
