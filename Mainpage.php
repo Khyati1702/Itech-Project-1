@@ -16,8 +16,8 @@
         <div class="nav-container">
             <span class="menu-toggle" onclick="toggleMenu()">☰</span>
             <nav class="main-nav">
-                <a href="#">Home</a>
-                <a href="assignment.php">Services</a>
+                <a href="Mainpage.php">Home</a>
+                <a href="assignment.php">Grading</a>
                 <a href="Profile.php">Students</a>
                 <a href="#">Contact</a>
                 <a href="#">Help</a>
@@ -87,7 +87,7 @@
             <div class="quick-links">
                 <h3>Quick Links</h3>
                 <ul>
-                    <li><a href="#">Home</a></li>
+                    <li><a href="Mainpage.php">Home</a></li>
                     <li><a href="#">Services</a></li>
                     <li><a href="#">Student Info</a></li>
                     <li><a href="#">Contacts</a></li>

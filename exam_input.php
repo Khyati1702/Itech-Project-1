@@ -1,5 +1,7 @@
 <?php
 session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 require 'configure.php';
 
 if (!isset($_SESSION['Username']) || $_SESSION['Role'] != 'Teacher') {
@@ -16,8 +18,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Validate inputs
     if (!empty($studentID) && !empty($courseID) && !empty($score) && is_numeric($score)) {
         $query = $config->prepare("INSERT INTO exam_scores (StudentID, CourseID, Score, Comments) VALUES (?, ?, ?, ?)");
+        if (!$query) {
+            die('Prepare failed: ' . $config->error);
+        }
         $query->bind_param("iiis", $studentID, $courseID, $score, $comments);
-        $query->execute();
+        if (!$query->execute()) {
+            die('Execute failed: ' . $query->error);
+        }
+        echo "Exam score added successfully.";
+    } else {
+        echo 'Validation failed: Missing or incorrect input.';
     }
 }
 
@@ -44,8 +54,8 @@ $courses = $config->query("SELECT CourseID, Name FROM courses");
         <div class="nav-container">
             <span class="menu-toggle" onclick="toggleMenu()">☰</span>
             <nav class="main-nav">
-                <a href="Mainpage.php">Home</a>
-                <a href="#">Services</a>
+            <a href="Mainpage.php">Home</a>
+                <a href="assignment.php">Grading</a>
                 <a href="Profile.php">Students</a>
                 <a href="#">Contact</a>
                 <a href="#">Help</a>

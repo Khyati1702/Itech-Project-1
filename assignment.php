@@ -7,10 +7,9 @@ if (!isset($_SESSION['Username']) || $_SESSION['Role'] != 'Teacher') {
     exit();
 }
 
-// Fetch assignments
-$assignmentsQuery = $config->prepare("SELECT a.AssignmentID, a.Title, a.Description, a.DueDate, c.Name as Course FROM assignments a JOIN courses c ON a.CourseID = c.CourseID");
-$assignmentsQuery->execute();
-$assignmentsResult = $assignmentsQuery->get_result();
+// Fetch assignments and exams
+$assignments = $config->query("SELECT AssignmentID, Title, Description, DueDate FROM assignments");
+$exams = $config->query("SELECT CourseID, Name FROM courses");
 ?>
 
 <!DOCTYPE html>
@@ -18,7 +17,7 @@ $assignmentsResult = $assignmentsQuery->get_result();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assignments</title>
+    <title>Assignments and Exams</title>
     <link rel="stylesheet" href="colors.css">
     <link rel="stylesheet" href="assignment.css">
 </head>
@@ -31,12 +30,11 @@ $assignmentsResult = $assignmentsQuery->get_result();
         <div class="nav-container">
             <span class="menu-toggle" onclick="toggleMenu()">☰</span>
             <nav class="main-nav">
-                <a href="Mainpage.php">Home</a>
-                <a href="#">Services</a>
+            <a href="Mainpage.php">Home</a>
+                <a href="assignment.php">Grading</a>
                 <a href="Profile.php">Students</a>
                 <a href="#">Contact</a>
                 <a href="#">Help</a>
-            </nav>
             <div class="search-container">
                 <input type="search" placeholder="Search">
                 <form action="logout.php" method="post">
@@ -47,29 +45,31 @@ $assignmentsResult = $assignmentsQuery->get_result();
     </header>
 
     <main>
-        <h1>Assignments</h1>
-        <table>
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Description</th>
-                    <th>Due Date</th>
-                    <th>Course</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while ($row = $assignmentsResult->fetch_assoc()): ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($row['Title']); ?></td>
-                    <td><?php echo htmlspecialchars($row['Description']); ?></td>
-                    <td><?php echo htmlspecialchars($row['DueDate']); ?></td>
-                    <td><?php echo htmlspecialchars($row['Course']); ?></td>
-                    <td><a href="assignment_input.php?AssignmentID=<?php echo $row['AssignmentID']; ?>">Input Score</a></td>
-                </tr>
+        <h1>Assignments and Exams</h1>
+        <div class="card">
+            <div class="tabs">
+                <button class="tab-button active" onclick="showTab('assignments')">Assignments</button>
+                <button class="tab-button" onclick="showTab('exams')">Exams</button>
+            </div>
+            <div id="assignments" class="tab-content active">
+                <?php while ($assignment = $assignments->fetch_assoc()): ?>
+                <div class="assignment-details">
+                    <h2><?php echo htmlspecialchars($assignment['Title']); ?></h2>
+                    <p><?php echo htmlspecialchars($assignment['Description']); ?></p>
+                    <p><strong>Due Date:</strong> <?php echo htmlspecialchars($assignment['DueDate']); ?></p>
+                    <a href="assignment_input.php?AssignmentID=<?php echo $assignment['AssignmentID']; ?>" class="input-link">Input Score</a>
+                </div>
                 <?php endwhile; ?>
-            </tbody>
-        </table>
+            </div>
+            <div id="exams" class="tab-content">
+                <?php while ($exam = $exams->fetch_assoc()): ?>
+                <div class="exam-details">
+                    <h2><?php echo htmlspecialchars($exam['Name']); ?></h2>
+                    <a href="exam_input.php?CourseID=<?php echo $exam['CourseID']; ?>" class="input-link">Input Score</a>
+                </div>
+                <?php endwhile; ?>
+            </div>
+        </div>
     </main>
 
     <footer class="main-footer">
@@ -108,6 +108,20 @@ $assignmentsResult = $assignmentsQuery->get_result();
             const nav = document.querySelector('.main-nav');
             nav.classList.toggle('active');
             console.log('Menu toggled.');
+        }
+
+        function showTab(tabId) {
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById(tabId).classList.add('active');
+
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+            document.querySelector(`.tab-button[onclick="showTab('${tabId}')"]`).classList.add('active');
         }
     </script>
 </body>
