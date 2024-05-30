@@ -1,0 +1,123 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+header {
+    background-color: #f60;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 20px;
+    align-items: center;
+}
+
+.logo img {
+    height: 50px; /* Adjust the height as needed */
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+}
+
+nav ul li {
+    margin-right: 20px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+}
+
+.search {
+    display: flex;
+}
+
+.search input {
+    padding: 5px;
+}
+
+.search button {
+    padding: 5px;
+    background-color: #444;
+    color: white;
+    border: none;
+}
+
+.profile-icon {
+    background-color: #444;
+    color: white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+main {
+    padding: 20px;
+    min-height: calc(100vh - 160px); /* Adjust for header and footer */
+}
+
+.assignment-submission h1 {
+    font-size: 24px;
+}
+
+.assignment-submission p {
+    font-size: 18px;
+}
+
+.assignment-submission button {
+    margin-right: 10px;
+    padding: 10px;
+    background-color: #f60;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.submission-status, .feedback {
+    margin-top: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    vertical-align: top;
+}
+
+footer {
+    background-color: #f60;
+    color: white;
+    display: flex;
+    justify-content: space-around;
+    padding: 20px;
+}
+
+footer h3 {
+    margin-top: 0;
+}
+
+footer ul {
+    list-style: none;
+    padding: 0;
+}
+
+footer .quick-links ul {
+    padding-left: 0;
+}
+
+footer .contact-us p,
+footer .address p {
+    margin: 5px 0;
+}
