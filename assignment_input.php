@@ -2,38 +2,48 @@
 session_start();
 require 'configure.php';
 
+// Check if the user is logged in and is a teacher
 if (!isset($_SESSION['Username']) || $_SESSION['Role'] != 'Teacher') {
-    header('Location: experiment2.php');
+    header('Location: LoginPage.php');
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $studentID = $_POST['studentID'];
-    $assignmentID = $_POST['assignmentID'];
-    $grade = $_POST['grade'];
-    $comments = $_POST['comments'];
-    
-    // Validate inputs
-    if (!empty($studentID) && !empty($assignmentID) && !empty($grade) && is_numeric($grade)) {
-        // Ensure that the SubmissionID corresponds to the correct student
-        $query = $config->prepare("INSERT INTO gradings (SubmissionID, TeacherID, Grade, Comments) VALUES (?, ?, ?, ?)");
-        $submissionIDQuery = $config->prepare("SELECT SubmissionID FROM submissions WHERE StudentID = ? AND AssignmentID = ?");
-        $submissionIDQuery->bind_param("ii", $studentID, $assignmentID);
-        $submissionIDQuery->execute();
-        $submissionResult = $submissionIDQuery->get_result();
-        if ($submissionRow = $submissionResult->fetch_assoc()) {
-            $submissionID = $submissionRow['SubmissionID'];
-            $query->bind_param("iiis", $submissionID, $_SESSION['UserID'], $grade, $comments);
-            $query->execute();
-        } else {
-            echo "Submission not found for this student and assignment.";
-        }
-    }
+// Get the student ID from the request
+$student_id = isset($_GET['student_id']) ? intval($_GET['student_id']) : 0;
+
+if ($student_id == 0) {
+    die('Invalid student ID');
 }
 
-// Fetch students and assignments
-$students = $config->query("SELECT UserID, Name FROM users WHERE Role='Student'");
-$assignments = $config->query("SELECT AssignmentID, Title FROM assignments");
+// Fetch student details
+$studentQuery = $config->query("SELECT Name FROM users WHERE UserID = $student_id AND Role = 'Stage1Students'");
+$student = $studentQuery->fetch_assoc();
+
+// Assessments for Stage 1 based on the provided PDF
+$stage1Assessments = [
+    "Interaction",
+    "Text Analysis",
+    "Text Production",
+    "Investigation Task Part A: PPT presentation",
+    "Investigation Task Part B: Reflective Writing in English"
+];
+
+// Fetch grades if already entered
+$gradesQuery = $config->query("SELECT assessment_name, grade FROM student_assessment_grades WHERE student_id = $student_id");
+$existingGrades = [];
+while ($row = $gradesQuery->fetch_assoc()) {
+    $existingGrades[$row['assessment_name']] = $row['grade'];
+}
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    foreach ($stage1Assessments as $assessment) {
+        $grade = isset($_POST['grade_' . md5($assessment)]) ? $_POST['grade_' . md5($assessment)] : '';
+        $config->query("REPLACE INTO student_assessment_grades (student_id, assessment_name, grade) VALUES ($student_id, '$assessment', '$grade')");
+    }
+    header("Location: assignment.php");
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -41,14 +51,14 @@ $assignments = $config->query("SELECT AssignmentID, Title FROM assignments");
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Input Assignment Score</title>
+    <title>Input Grades for <?php echo htmlspecialchars($student['Name']); ?></title>
     <link rel="stylesheet" href="colors.css">
     <link rel="stylesheet" href="assignment_input.css">
 </head>
 <body>
     <header class="main-header">
         <div class="logo-container">
-            <img class="header-title" src="Eximages/REAL_SACE.png" alt="SACE Portal Logo">
+            <img class="header-title" src="Images/REAL_SACE.png" alt="SACE Portal Logo">
             <span class="header-title">SACE Portal</span>
         </div>
         <div class="nav-container">
@@ -70,33 +80,27 @@ $assignments = $config->query("SELECT AssignmentID, Title FROM assignments");
     </header>
 
     <main>
-        <h1>Input Assignment Score</h1>
-        <form action="assignment_input.php" method="post">
-            <div>
-                <label for="studentID">Student:</label>
-                <select name="studentID" id="studentID">
-                    <?php while ($student = $students->fetch_assoc()): ?>
-                        <option value="<?php echo $student['UserID']; ?>"><?php echo $student['Name']; ?></option>
-                    <?php endwhile; ?>
-                </select>
-            </div>
-            <div>
-                <label for="assignmentID">Assignment:</label>
-                <select name="assignmentID" id="assignmentID">
-                    <?php while ($assignment = $assignments->fetch_assoc()): ?>
-                        <option value="<?php echo $assignment['AssignmentID']; ?>"><?php echo $assignment['Title']; ?></option>
-                    <?php endwhile; ?>
-                </select>
-            </div>
-            <div>
-                <label for="grade">Grade:</label>
-                <input type="number" name="grade" id="grade" required>
-            </div>
-            <div>
-                <label for="comments">Comments:</label>
-                <textarea name="comments" id="comments"></textarea>
-            </div>
-            <button type="submit">Submit</button>
+        <h1>Input Grades for <?php echo htmlspecialchars($student['Name']); ?></h1>
+        <form method="post">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Assessment</th>
+                        <th>Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($stage1Assessments as $assessment): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($assessment); ?></td>
+                            <td>
+                                <input type="text" name="grade_<?php echo md5($assessment); ?>" value="<?php echo isset($existingGrades[$assessment]) ? htmlspecialchars($existingGrades[$assessment]) : ''; ?>">
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <button type="submit">Save Grades</button>
         </form>
     </main>
 
@@ -126,17 +130,9 @@ $assignments = $config->query("SELECT AssignmentID, Title FROM assignments");
             </div>
         </div>
         <div class="footer-bottom">
-            <img src="Eximages/REAL_SACE.png" alt="SACE Portal Logo">
+            <img src="Images/REAL_SACE.png" alt="SACE Portal Logo">
             <p>&copy; SACE Student Portal</p>
         </div>
     </footer>
-
-    <script>
-        function toggleMenu() {
-            const nav = document.querySelector('.main-nav');
-            nav.classList.toggle('active');
-            console.log('Menu toggled.');
-        }
-    </script>
 </body>
 </html>

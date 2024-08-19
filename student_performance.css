@@ -10,7 +10,7 @@ body {
   flex-direction: column;
   min-height: 100vh;
   background-color: var(--background-color);
-  background-image: url(Eximages/Scenary_background.png);
+  background-image: url(Images/Scenary_background.png); /* Changed from Eximages to Images */
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;

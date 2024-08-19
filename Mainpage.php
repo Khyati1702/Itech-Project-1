@@ -10,7 +10,7 @@
 <body>
     <header class="main-header">
         <div class="logo-container">
-            <img class="header-title" src="Eximages/REAL_SACE.png" alt="SACE Portal Logo">
+            <img class="header-title" src="Images/REAL_SACE.png" alt="SACE Portal Logo"> <!-- Changed "Eximages" to "Images" -->
             <span class="header-title">SACE Portal</span>
         </div>
         <div class="nav-container">
@@ -21,7 +21,6 @@
                 <a href="Profile.php">Students</a>
                 <a href="#">Contact</a>
                 <a href="#">Help</a>
-               
             </nav>
             
             <div class="search-container">
@@ -31,8 +30,6 @@
                 </form>
             </div>
         </div>
-       
-
     </header>
 
     <main>
@@ -112,7 +109,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <img src="Eximages/REAL_SACE.png" alt="SACE Portal Logo">
+            <img src="Images/REAL_SACE.png" alt="SACE Portal Logo"> <!-- Changed "Eximages" to "Images" -->
             <p>&copy; SACE Student Portal</p>
         </div>
     </footer>
@@ -127,4 +124,3 @@
    
 </body>
 </html>
-

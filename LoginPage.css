@@ -1,0 +1,149 @@
+* {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--background-color);
+    background-image: url(Images/Scenary_background.png); /* Changed "Eximages" to "Images" */
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+.container {
+    background-color: var(--background-color);
+    width: 50vw;
+    padding: 1.5vw;
+    border: white solid 5px;
+    height: 65vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.toplogin {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.toplogin img {
+    border: solid 2px white; 
+    width: 103px;
+    height: 90px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
+    border-radius: 5px;
+}
+
+#sacename {
+    margin-left: 2px;
+    font-size: 30px;
+    color: var(--third-color);
+}
+
+#verticleline {
+    border-left: 3px solid white;
+    height: 95px;
+    margin-left: 8px; 
+}
+
+#logintitle {
+    text-align: center;
+    margin: 15px;
+    text-decoration: underline;
+    color: var(--third-color);
+}
+
+#horizontalline {
+    height: 3px;
+    border: none;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    background-color: var(--third-color);
+}
+
+form {
+    text-align: center;
+    margin: 0 2rem;
+}
+
+#passlabel {
+    margin-left: -1px;
+}
+
+input {
+    min-width: 117px;
+    padding-left: 7px;
+    height: 35px;
+    margin-bottom: 20px;
+    width: 95%; 
+    color: inherit;
+    background-color: var(--third-color);
+    border: 2.5px solid;
+    border-radius: 6px;
+    font-size: 18px;
+}
+
+.sbmt {
+    background-color: var(--primary-color);
+}
+
+#submitbtn {
+    padding-left: 1px;
+    min-width: 90px;
+    max-width: 10px;
+    margin-right: 20px;
+    transition: 0.5s;
+}
+
+#submitbtn:hover {
+    background-color: var(--primary-color);
+    color: var(--third-color);
+}
+
+#passwordlost {
+    padding-bottom: 15px;
+}
+
+#passwordlost a:link {
+    color: var(--third-color);
+    text-decoration: none;
+}
+
+.or {
+    color: var(--third-color);
+    margin-bottom: 20px;
+}
+
+form .googleicon {
+    overflow: hidden;
+    align-items: center;
+    margin-top: 2.5%;
+    margin-left: 20%;
+    margin-right: 20%;
+    border: black solid 1.5px;
+    border-radius: 25px;
+    background-color: var(--primary-color);
+    margin-bottom: 25px;
+}
+
+.googleicon a:link {
+    color: var(--text-color);
+    background-color: transparent;
+    text-decoration: none;
+}
+
+.googleicon:hover {
+    background-color: var(--primary-color);
+}

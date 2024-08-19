@@ -3,16 +3,17 @@ session_start();
 require 'configure.php';
 
 if (!isset($_SESSION['Username'])) {
-    header('Location: experiment2.php');
+    header('Location: LoginPage.php'); // Redirect to the login page if the user is not logged in
     exit();
 }
 
 if (!isset($_GET['UserID'])) {
-    header('Location: Profile.php');
+    header('Location: Profile.php'); // Redirect to the profile page if no user ID is provided
     exit();
 }
 
 $UserID = $_GET['UserID'];
+$loggedInUserRole = $_SESSION['Role']; // Get the role of the logged-in user
 
 // Fetch student information
 $query = $config->prepare("SELECT Name, Course FROM users WHERE UserID = ?");
@@ -43,7 +44,7 @@ if (!$attendanceResult) {
 }
 
 // Fetch grades
-$gradesQuery = $config->prepare("SELECT g.Grade, g.Comments, g.GradingTimestamp, c.Name as Course FROM gradings g JOIN submissions s ON g.SubmissionID = s.SubmissionID JOIN assignments a ON s.AssignmentID = a.AssignmentID JOIN courses c ON a.CourseID = c.CourseID WHERE s.StudentID = ?");
+$gradesQuery = $config->prepare("SELECT g.GradingID, g.Grade, g.Comments, g.GradingTimestamp, c.Name as Course FROM gradings g JOIN submissions s ON g.SubmissionID = s.SubmissionID JOIN assignments a ON s.AssignmentID = a.AssignmentID JOIN courses c ON a.CourseID = c.CourseID WHERE s.StudentID = ?");
 if (!$gradesQuery) {
     die('Prepare failed: ' . $config->error);
 }
@@ -55,7 +56,7 @@ if (!$gradesResult) {
 }
 
 // Fetch exam scores
-$examScoresQuery = $config->prepare("SELECT es.Score, es.Comments, c.Name as Course FROM exam_scores es JOIN courses c ON es.CourseID = c.CourseID WHERE es.StudentID = ?");
+$examScoresQuery = $config->prepare("SELECT es.ExamID, es.Score, es.Comments, es.LastUpdated, c.Name as Course FROM exam_scores es JOIN courses c ON es.CourseID = c.CourseID WHERE es.StudentID = ?");
 if (!$examScoresQuery) {
     die('Prepare failed: ' . $config->error);
 }
@@ -64,6 +65,42 @@ $examScoresQuery->execute();
 $examScoresResult = $examScoresQuery->get_result();
 if (!$examScoresResult) {
     die('Execute failed: ' . $examScoresQuery->error);
+}
+
+// Handle the exam score update
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_exam_score']) && $loggedInUserRole == 'Teacher') {
+    $scoreID = $_POST['score_id'];
+    $newScore = $_POST['new_score'];
+
+    // Update the score and timestamp in the database
+    $updateQuery = $config->prepare("UPDATE exam_scores SET Score = ?, LastUpdated = NOW() WHERE ExamID = ?");
+    if (!$updateQuery) {
+        die('Prepare failed: ' . $config->error);
+    }
+    $updateQuery->bind_param("di", $newScore, $scoreID);
+    if ($updateQuery->execute()) {
+        echo "<p>Exam score updated successfully.</p>";
+    } else {
+        echo "<p>Failed to update exam score.</p>";
+    }
+}
+
+// Handle the grade update
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_grade']) && $loggedInUserRole == 'Teacher') {
+    $gradingID = $_POST['grading_id'];
+    $newGrade = $_POST['new_grade'];
+
+    // Update the grade and timestamp in the database
+    $updateGradeQuery = $config->prepare("UPDATE gradings SET Grade = ?, GradingTimestamp = NOW() WHERE GradingID = ?");
+    if (!$updateGradeQuery) {
+        die('Prepare failed: ' . $config->error);
+    }
+    $updateGradeQuery->bind_param("di", $newGrade, $gradingID);
+    if ($updateGradeQuery->execute()) {
+        echo "<p>Grade updated successfully.</p>";
+    } else {
+        echo "<p>Failed to update grade.</p>";
+    }
 }
 ?>
 
@@ -79,13 +116,13 @@ if (!$examScoresResult) {
 <body>
     <header class="main-header">
         <div class="logo-container">
-            <img class="header-title" src="Eximages/REAL_SACE.png" alt="SACE Portal Logo">
+            <img class="header-title" src="Images/REAL_SACE.png" alt="SACE Portal Logo">
             <span class="header-title">SACE Portal</span>
         </div>
         <div class="nav-container">
             <span class="menu-toggle" onclick="toggleMenu()">☰</span>
             <nav class="main-nav">
-            <a href="Mainpage.php">Home</a>
+                <a href="Mainpage.php">Home</a>
                 <a href="assignment.php">Grading</a>
                 <a href="Profile.php">Students</a>
                 <a href="#">Contact</a>
@@ -135,6 +172,9 @@ if (!$examScoresResult) {
                         <th>Grade</th>
                         <th>Comments</th>
                         <th>Timestamp</th>
+                        <?php if ($loggedInUserRole == 'Teacher'): ?>
+                        <th>Update Grade</th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
@@ -144,6 +184,15 @@ if (!$examScoresResult) {
                         <td><?php echo htmlspecialchars($row['Grade']); ?></td>
                         <td><?php echo htmlspecialchars($row['Comments']); ?></td>
                         <td><?php echo htmlspecialchars($row['GradingTimestamp']); ?></td>
+                        <?php if ($loggedInUserRole == 'Teacher'): ?>
+                        <td>
+                            <form method="POST" action="">
+                                <input type="hidden" name="grading_id" value="<?php echo $row['GradingID']; ?>">
+                                <input type="number" name="new_grade" value="<?php echo $row['Grade']; ?>" required>
+                                <button type="submit" name="update_grade">Update Grade</button>
+                            </form>
+                        </td>
+                        <?php endif; ?>
                     </tr>
                     <?php endwhile; ?>
                 </tbody>
@@ -158,6 +207,10 @@ if (!$examScoresResult) {
                         <th>Course</th>
                         <th>Score</th>
                         <th>Comments</th>
+                        <th>Last Updated</th>
+                        <?php if ($loggedInUserRole == 'Teacher'): ?>
+                        <th>Update Score</th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
@@ -166,6 +219,16 @@ if (!$examScoresResult) {
                         <td><?php echo htmlspecialchars($row['Course']); ?></td>
                         <td><?php echo htmlspecialchars($row['Score']); ?></td>
                         <td><?php echo htmlspecialchars($row['Comments']); ?></td>
+                        <td><?php echo htmlspecialchars($row['LastUpdated']); ?></td>
+                        <?php if ($loggedInUserRole == 'Teacher'): ?>
+                        <td>
+                            <form method="POST" action="">
+                                <input type="hidden" name="score_id" value="<?php echo $row['ExamID']; ?>">
+                                <input type="number" name="new_score" value="<?php echo $row['Score']; ?>" required>
+                                <button type="submit" name="update_exam_score">Update Score</button>
+                            </form>
+                        </td>
+                        <?php endif; ?>
                     </tr>
                     <?php endwhile; ?>
                 </tbody>
@@ -199,7 +262,7 @@ if (!$examScoresResult) {
             </div>
         </div>
         <div class="footer-bottom">
-            <img src="Eximages/REAL_SACE.png" alt="SACE Portal Logo">
+            <img src="Images/REAL_SACE.png" alt="SACE Portal Logo">
             <p>&copy; SACE Student Portal</p>
         </div>
     </footer>

@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['Username'])) {
-    header('Location: experiment2.php');
+    header('Location: LoginPage.php'); // Changed from experiment2.php to LoginPage.php
     exit();
 }
 
@@ -33,13 +33,13 @@ if (isset($_GET['UserID'])) {
 <body>
     <header class="main-header">
         <div class="logo-container">
-            <img class="header-title" src="Eximages/REAL_SACE.png" alt="SACE Portal Logo">
+            <img class="header-title" src="Images/REAL_SACE.png" alt="SACE Portal Logo"> <!-- Changed from Eximages to Images -->
             <span class="header-title">SACE Portal</span>
         </div>
         <div class="nav-container">
             <span class="menu-toggle" onclick="toggleMenu()">☰</span>
             <nav class="main-nav">
-            <a href="Mainpage.php">Home</a>
+                <a href="Mainpage.php">Home</a>
                 <a href="assignment.php">Grading</a>
                 <a href="Profile.php">Students</a>
                 <a href="#">Contact</a>
@@ -103,7 +103,7 @@ if (isset($_GET['UserID'])) {
             </div>
         </div>
         <div class="footer-bottom">
-            <img src="Eximages/REAL_SACE.png" alt="SACE Portal Logo">
+            <img src="Images/REAL_SACE.png" alt="SACE Portal Logo"> <!-- Changed from Eximages to Images -->
             <p>&copy; SACE Student Portal</p>
         </div>
     </footer>
