@@ -340,3 +340,28 @@ td .update-grade-form button:hover {
       width: 100%; /* Full width on smaller screens */
   }
 }
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  font-size: 16px;
+  text-align: center;
+  text-decoration: none;
+  color: #000; /* Black text color */
+  background-color: #e0f7fc; /* Light blue background */
+  border: 3px solid var(--third-color); /* Slightly darker border */
+  border-radius: 10px; /* Rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for a 3D effect */
+  transition: all 0.3s ease; /* Smooth transition for hover effects */
+}
+
+.btn:hover {
+  background-color: #c4e6f1; /* Darker blue on hover */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Enhance shadow on hover */
+  transform: translateY(-2px); /* Slight lift effect */
+}
+
+.btn:active {
+  background-color: #b3d3e3; /* Even darker blue when clicked */
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Pressed down effect */
+  transform: translateY(1px); /* Slight press down effect */
+}

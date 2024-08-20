@@ -1,4 +1,5 @@
 <?php
+
 session_start();
 require 'configure.php';
 
@@ -134,6 +135,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_exam']) && $log
         <h1>Student Performance</h1>
         <h2><?php echo htmlspecialchars($student['Name']); ?> - <?php echo htmlspecialchars($student['Course']); ?></h2>
         
+        <!-- Download PDF Report Button -->
+        <section>
+            <a href="generate_report.php?UserID=<?php echo $UserID; ?>" class="btn btn-primary">Download PDF Report</a>
+            <a href="generate_word_report.php?UserID=<?php echo $UserID; ?>" class="btn btn-primary">Download Word Report</a>
+
+        </section>
+
         <!-- Assessment Grades Table -->
         <section>
             <h3>Grades and Comments</h3>
