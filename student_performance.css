@@ -261,3 +261,82 @@ table td a:hover {
       display: none;
   }
 }
+.teacher-notes-section {
+  width: 100%;
+  margin-top: 20px;
+  border: 1px solid #c7c7c7; /* Light border to match the style */
+}
+
+.teacher-notes-header {
+  background-color: #85B3DB; /* Match the header color */
+  color: white;
+  font-weight: bold;
+  padding: 10px;
+  border-bottom: 1px solid #c7c7c7; /* Border to separate header from content */
+  text-align: left;
+}
+
+.teacher-notes-content {
+  padding: 10px;
+  background-color: white;
+}
+
+.teacher-notes-content textarea {
+  width: 100%;
+  border: 1px solid #c7c7c7;
+  padding: 10px;
+  font-size: 1em;
+  background-color: #f9f9f9; /* Light background for textarea */
+}
+/* Style for the table cell containing the update form */
+td .update-grade-form {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px; /* Space between inputs and button */
+}
+
+/* Style for the grade input field */
+td .update-grade-form input[type="number"] {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 60px; /* Set a fixed width for alignment */
+}
+
+/* Style for the comment input field */
+td .update-grade-form input[type="text"] {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 180px; /* Set a fixed width for alignment */
+}
+
+/* Style for the update button */
+td .update-grade-form button {
+  background-color: #eaf7fc; /* Light blue background */
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+td .update-grade-form button:hover {
+  background-color: #d4eefc; /* Darker blue on hover */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  td .update-grade-form {
+      flex-direction: column;
+      align-items: flex-start;
+  }
+
+  td .update-grade-form input[type="number"],
+  td .update-grade-form input[type="text"],
+  td .update-grade-form button {
+      width: 100%; /* Full width on smaller screens */
+  }
+}

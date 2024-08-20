@@ -3,10 +3,11 @@ require 'configure.php';
 require_once 'vendor/autoload.php';
 session_start();
 
-// Google Client ID and Secret
+// Use environment variables for sensitive information
 $clientID = '704453595817-2qrd8v8c2rhgl75qvv8iumu11864mo22.apps.googleusercontent.com';
 $clientSecret = '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';
 $redirectUri = 'http://localhost/DraftWebsite/Mainpage.php'; 
+
 
 // Create Google Client
 $client = new Google_Client();
@@ -34,21 +35,24 @@ if (isset($_GET['code'])) {
     $email = $google_account_info->email;
     $name = $google_account_info->name;
 
-    // Check if user exists in database
-    $select = "SELECT * FROM users WHERE Email='$email'";
+    // Check if user exists in the database
+    $select = "SELECT * FROM users WHERE GoogleEmail='$email'";
     $query = mysqli_query($config, $select);
     if (mysqli_num_rows($query) > 0) {
         $user = mysqli_fetch_assoc($query);
         $_SESSION['Username'] = $user['Username'];
         $_SESSION['Role'] = $user['Role'];
+        $_SESSION['UserID'] = $user['UserID']; // Ensure UserID is set in session
         header('Location: Mainpage.php');
         exit();
     } else {
         // New user, insert into database
-        $insert = "INSERT INTO users (Username, Email, Role) VALUES ('$name', '$email', 'Student')";
+        $insert = "INSERT INTO users (Username, GoogleEmail, Role) VALUES ('$name', '$email', 'Student')";
         if (mysqli_query($config, $insert)) {
+            $newUserID = mysqli_insert_id($config); // Get the new UserID
             $_SESSION['Username'] = $name;
             $_SESSION['Role'] = 'Student';
+            $_SESSION['UserID'] = $newUserID;
             header('Location: Mainpage.php');
             exit();
         } else {
@@ -68,11 +72,12 @@ if (isset($_POST['submit_btn'])) {
         $user = mysqli_fetch_array($query);
         $_SESSION['Username'] = $user['Username'];
         $_SESSION['Role'] = $user['Role'];
+        $_SESSION['UserID'] = $user['UserID']; // Ensure UserID is set in session
         header('Location: Mainpage.php');
         exit();
     } else {
         $_SESSION['error'] = "<div style='background-color:var(--primary-color); color:black; padding:5px; margin:0px 150px 15px 150px; border:2px white solid'>Invalid Username or Password</div>";
-        header('Location: LoginPage.php'); // Changed from "experiment2.php" to "LoginPage.php"
+        header('Location: LoginPage.php');
         exit();
     }
 }
@@ -83,7 +88,7 @@ if (isset($_POST['submit_btn'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <link rel="stylesheet" href="LoginPage.css"> <!-- Changed from "experiment2.css" to "LoginPage.css" -->
+    <link rel="stylesheet" href="LoginPage.css">
     <link rel="stylesheet" href="colors.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
@@ -95,7 +100,7 @@ if (isset($_POST['submit_btn'])) {
 
     <div class="container" id="Login">
         <div class="toplogin">
-            <img src="Images/REAL_SACE.png" alt="SACE Logo"> <!-- Changed from "Eximages" to "Images" -->
+            <img src="Images/REAL_SACE.png" alt="SACE Logo">
             <h1 id="verticleline"></h1>
             <h1 id="sacename">SACE Portal</h1>
         </div>

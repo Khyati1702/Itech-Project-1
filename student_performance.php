@@ -3,104 +3,65 @@ session_start();
 require 'configure.php';
 
 if (!isset($_SESSION['Username'])) {
-    header('Location: LoginPage.php'); // Redirect to the login page if the user is not logged in
+    header('Location: LoginPage.php');
     exit();
 }
 
 if (!isset($_GET['UserID'])) {
-    header('Location: Profile.php'); // Redirect to the profile page if no user ID is provided
+    header('Location: Profile.php');
     exit();
 }
 
 $UserID = $_GET['UserID'];
-$loggedInUserRole = $_SESSION['Role']; // Get the role of the logged-in user
+$loggedInUserRole = $_SESSION['Role'];
 
 // Fetch student information
-$query = $config->prepare("SELECT Name, Course FROM users WHERE UserID = ?");
-if (!$query) {
-    die('Prepare failed: ' . $config->error);
-}
+$query = $config->prepare("SELECT Name, Course, Role FROM users WHERE UserID = ?");
 $query->bind_param("i", $UserID);
 $query->execute();
 $result = $query->get_result();
-if (!$result) {
-    die('Execute failed: ' . $query->error);
-}
 $student = $result->fetch_assoc();
-if (!$student) {
-    die('Fetch failed: ' . $query->error);
-}
+$studentRole = $student['Role'];
 
-// Fetch attendance records
-$attendanceQuery = $config->prepare("SELECT Date, Status, c.Name as Course FROM attendance a JOIN courses c ON a.CourseID = c.CourseID WHERE a.StudentID = ?");
-if (!$attendanceQuery) {
-    die('Prepare failed: ' . $config->error);
-}
-$attendanceQuery->bind_param("i", $UserID);
-$attendanceQuery->execute();
-$attendanceResult = $attendanceQuery->get_result();
-if (!$attendanceResult) {
-    die('Execute failed: ' . $attendanceQuery->error);
-}
+// Determine the assessments to display based on the student's role
+$assessments = ($studentRole == 'Stage1Students') ? [
+    "Interaction", "Text_Analysis", "Text_Production", 
+    "Investigation_Task_Part_A", "Investigation_Task_Part_B"
+] : [
+    "Interaction", "Text_Analysis", "Text_Production", 
+    "Oral_Presentation", "Response_Japanese", "Response_English"
+];
 
-// Fetch grades
-$gradesQuery = $config->prepare("SELECT g.GradingID, g.Grade, g.Comments, g.GradingTimestamp, c.Name as Course FROM gradings g JOIN submissions s ON g.SubmissionID = s.SubmissionID JOIN assignments a ON s.AssignmentID = a.AssignmentID JOIN courses c ON a.CourseID = c.CourseID WHERE s.StudentID = ?");
-if (!$gradesQuery) {
-    die('Prepare failed: ' . $config->error);
-}
+// Fetch grades, comments, and teacher notes from gradings table
+$gradesQuery = $config->prepare("
+    SELECT * FROM gradings 
+    WHERE StudentID = ?");
 $gradesQuery->bind_param("i", $UserID);
 $gradesQuery->execute();
 $gradesResult = $gradesQuery->get_result();
-if (!$gradesResult) {
-    die('Execute failed: ' . $gradesQuery->error);
-}
+$grades = $gradesResult->fetch_assoc();
 
-// Fetch exam scores
-$examScoresQuery = $config->prepare("SELECT es.ExamID, es.Score, es.Comments, es.LastUpdated, c.Name as Course FROM exam_scores es JOIN courses c ON es.CourseID = c.CourseID WHERE es.StudentID = ?");
-if (!$examScoresQuery) {
-    die('Prepare failed: ' . $config->error);
-}
-$examScoresQuery->bind_param("i", $UserID);
-$examScoresQuery->execute();
-$examScoresResult = $examScoresQuery->get_result();
-if (!$examScoresResult) {
-    die('Execute failed: ' . $examScoresQuery->error);
-}
-
-// Handle the exam score update
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_exam_score']) && $loggedInUserRole == 'Teacher') {
-    $scoreID = $_POST['score_id'];
-    $newScore = $_POST['new_score'];
-
-    // Update the score and timestamp in the database
-    $updateQuery = $config->prepare("UPDATE exam_scores SET Score = ?, LastUpdated = NOW() WHERE ExamID = ?");
-    if (!$updateQuery) {
-        die('Prepare failed: ' . $config->error);
-    }
-    $updateQuery->bind_param("di", $newScore, $scoreID);
-    if ($updateQuery->execute()) {
-        echo "<p>Exam score updated successfully.</p>";
-    } else {
-        echo "<p>Failed to update exam score.</p>";
-    }
-}
-
-// Handle the grade update
+// Handle grade update
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_grade']) && $loggedInUserRole == 'Teacher') {
-    $gradingID = $_POST['grading_id'];
+    $assessment = $_POST['assessment'];
     $newGrade = $_POST['new_grade'];
+    $newComment = $_POST['new_comment'];
 
-    // Update the grade and timestamp in the database
-    $updateGradeQuery = $config->prepare("UPDATE gradings SET Grade = ?, GradingTimestamp = NOW() WHERE GradingID = ?");
-    if (!$updateGradeQuery) {
-        die('Prepare failed: ' . $config->error);
-    }
-    $updateGradeQuery->bind_param("di", $newGrade, $gradingID);
-    if ($updateGradeQuery->execute()) {
+    $updateQuery = $config->prepare("
+        UPDATE gradings 
+        SET $assessment = ?, Comments_$assessment = ?, GradingTimestamp = NOW()
+        WHERE StudentID = ? AND TeacherID = ?");
+    $updateQuery->bind_param("dsii", $newGrade, $newComment, $UserID, $_SESSION['UserID']);
+
+    if ($updateQuery->execute()) {
         echo "<p>Grade updated successfully.</p>";
     } else {
         echo "<p>Failed to update grade.</p>";
     }
+
+    // Refresh to show updated data
+    header("Location: student_performance.php?UserID=" . $UserID);
+    exit();
 }
 ?>
 
@@ -142,35 +103,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_grade']) && $lo
         <h2><?php echo htmlspecialchars($student['Name']); ?> - <?php echo htmlspecialchars($student['Course']); ?></h2>
         
         <section>
-            <h3>Attendance</h3>
+            <h3>Grades and Comments</h3>
             <table>
                 <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th>Course</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while ($row = $attendanceResult->fetch_assoc()): ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($row['Date']); ?></td>
-                        <td><?php echo htmlspecialchars($row['Status']); ?></td>
-                        <td><?php echo htmlspecialchars($row['Course']); ?></td>
-                    </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
-        </section>
-        
-        <section>
-            <h3>Grades</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Course</th>
+                        <th>Assessment</th>
                         <th>Grade</th>
-                        <th>Comments</th>
+                        <th>Comment</th>
                         <th>Timestamp</th>
                         <?php if ($loggedInUserRole == 'Teacher'): ?>
                         <th>Update Grade</th>
@@ -178,62 +117,40 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_grade']) && $lo
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while ($row = $gradesResult->fetch_assoc()): ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($row['Course']); ?></td>
-                        <td><?php echo htmlspecialchars($row['Grade']); ?></td>
-                        <td><?php echo htmlspecialchars($row['Comments']); ?></td>
-                        <td><?php echo htmlspecialchars($row['GradingTimestamp']); ?></td>
-                        <?php if ($loggedInUserRole == 'Teacher'): ?>
-                        <td>
-                            <form method="POST" action="">
-                                <input type="hidden" name="grading_id" value="<?php echo $row['GradingID']; ?>">
-                                <input type="number" name="new_grade" value="<?php echo $row['Grade']; ?>" required>
-                                <button type="submit" name="update_grade">Update Grade</button>
-                            </form>
-                        </td>
+                    <?php foreach ($assessments as $assessment): ?>
+                        <?php if (!empty($grades[$assessment]) || !empty($grades['Comments_' . $assessment])): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars(str_replace('_', ' ', $assessment)); ?></td>
+                                <td><?php echo htmlspecialchars($grades[$assessment]); ?></td>
+                                <td><?php echo htmlspecialchars($grades['Comments_' . $assessment]); ?></td>
+                                <td><?php echo htmlspecialchars($grades['GradingTimestamp']); ?></td>
+                                <?php if ($loggedInUserRole == 'Teacher'): ?>
+                                <td>
+                                    <form method="POST" class="update-grade-form">
+                                        <input type="hidden" name="assessment" value="<?php echo $assessment; ?>">
+                                        <input type="number" name="new_grade" value="<?php echo $grades[$assessment]; ?>" required>
+                                        <input type="text" name="new_comment" value="<?php echo $grades['Comments_' . $assessment]; ?>">
+                                        <button type="submit" name="update_grade">Update</button>
+                                    </form>
+                                </td>
+                                <?php endif; ?>
+                            </tr>
                         <?php endif; ?>
-                    </tr>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
         </section>
 
-        <section>
-            <h3>Exam Scores</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Course</th>
-                        <th>Score</th>
-                        <th>Comments</th>
-                        <th>Last Updated</th>
-                        <?php if ($loggedInUserRole == 'Teacher'): ?>
-                        <th>Update Score</th>
-                        <?php endif; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while ($row = $examScoresResult->fetch_assoc()): ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($row['Course']); ?></td>
-                        <td><?php echo htmlspecialchars($row['Score']); ?></td>
-                        <td><?php echo htmlspecialchars($row['Comments']); ?></td>
-                        <td><?php echo htmlspecialchars($row['LastUpdated']); ?></td>
-                        <?php if ($loggedInUserRole == 'Teacher'): ?>
-                        <td>
-                            <form method="POST" action="">
-                                <input type="hidden" name="score_id" value="<?php echo $row['ExamID']; ?>">
-                                <input type="number" name="new_score" value="<?php echo $row['Score']; ?>" required>
-                                <button type="submit" name="update_exam_score">Update Score</button>
-                            </form>
-                        </td>
-                        <?php endif; ?>
-                    </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
-        </section>
+        <?php if ($loggedInUserRole == 'Teacher'): ?>
+            <section class="teacher-notes-section">
+                <div class="teacher-notes-header">
+                    Teacher Notes
+                </div>
+                <div class="teacher-notes-content">
+                    <p><?php echo htmlspecialchars($grades['TeacherNote']); ?></p>
+                </div>
+            </section>
+        <?php endif; ?>
     </main>
 
     <footer class="main-footer">

@@ -1,13 +1,43 @@
 /* General Styles */
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f7f6;
+* {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    color: #333;
 }
 
-/* Header styles */
+
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-image: url(Images/Scenary_background.png);
+    background-size: cover;
+    background-repeat: no-repeat;
+    border: solid 2px var(--third-color);
+}
+
+main {
+    flex: 1;
+    padding: 20px;
+}
+
+h1 {
+    margin-top: 10px;
+    color: var(--background-color);
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInSlideUp 2s forwards;
+}
+
+@keyframes fadeInSlideUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Header Styles */
 .main-header {
     display: flex;
     justify-content: space-between;
@@ -82,7 +112,7 @@ body {
     margin-left: 5px;
 }
 
-/* Form styles */
+/* Form Styles */
 form {
     background-color: var(--primary-color);
     padding: 20px;
@@ -91,80 +121,88 @@ form {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-form table {
+form div {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text-color);
+}
+
+input, select, textarea {
     width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-    background-color: white;
-}
-
-form th, form td {
-    padding: 15px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-
-form th {
-    background-color: #3498db;
-    color: white;
-    text-align: center;
-    font-weight: bold;
-    font-size: 1rem;
-}
-
-form td {
-    background-color: #ecf0f1;
-    color: #333;
-    text-align: center;
-    font-size: 0.9rem;
-}
-
-form button {
-    background-color: #2980b9;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    cursor: pointer;
+    padding: 8px;
+    border: solid 2px var(--third-color);
     border-radius: 5px;
-    transition: background-color 0.3s, transform 0.3s;
 }
 
-form button:hover {
-    background-color: #1f5f8a;
-    transform: scale(1.05);
+button {
+    background-color: var(--background-color);
+    color: var(--third-color);
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
 }
 
-/* Footer styles */
+button:hover {
+    background-color: var(--third-color);
+    color: var(--background-color);
+}
+
+/* Footer Styles */
 .main-footer {
     background-color: var(--background-color);
-    color: white;
-    padding: 10px 20px;
-    text-align: center;
+    color: var(--primary-color);
+    padding: 0.25rem 0;
+    border: solid 0.5px var(--third-color);
 }
 
 .footer-content {
     display: flex;
     justify-content: space-around;
-    padding: 20px 0;
+    text-align: center;
+    padding: 0.25rem 0;
+}
+
+.footer-content h3 {
+    margin-bottom: 0.1rem;
+}
+
+.footer-content ul {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.footer-content ul li {
+    margin-bottom: 2px;
+}
+
+.footer-content ul a {
+    color: var(--third-color);
+    text-decoration: none;
 }
 
 .footer-bottom {
-    background-color: #34495e;
-    color: white;
-    padding: 10px;
+    text-align: center;
+    padding: 0.1rem 0;
 }
 
 .footer-bottom img {
     height: 30px;
-    margin-bottom: 10px;
+    margin-bottom: 0.1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
+    border-radius: 5px;
 }
 
 .footer-bottom p {
-    margin: 0;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
-/* Responsive styles */
+/* Responsive Styles */
 @media (max-width: 768px) {
     .main-header {
         flex-wrap: wrap;
@@ -186,10 +224,33 @@ form button:hover {
         display: flex;
     }
 
+    .main-nav a {
+        padding: 10px;
+        border-top: 1px solid var(--third-color);
+        width: 100%;
+        text-align: left;
+    }
+
+    .main-nav a:hover {
+        background-color: var(--third-color);
+    }
+
     .menu-toggle {
         display: block;
         cursor: pointer;
         font-size: 2rem;
-        color: #ecf0f1;
+        color: var(--third-color);
+    }
+
+    .menu-toggle.active + .main-nav {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+}
+
+@media (min-width: 769px) {
+    .menu-toggle {
+        display: none;
     }
 }
