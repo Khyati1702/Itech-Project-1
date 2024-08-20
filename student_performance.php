@@ -41,7 +41,15 @@ $gradesQuery->execute();
 $gradesResult = $gradesQuery->get_result();
 $grades = $gradesResult->fetch_assoc();
 
-// Handle grade update
+// Fetch exam scores and comments from exam_scores table
+$examScoresQuery = $config->prepare("
+    SELECT * FROM exam_scores 
+    WHERE StudentID = ?");
+$examScoresQuery->bind_param("i", $UserID);
+$examScoresQuery->execute();
+$examScoresResult = $examScoresQuery->get_result();
+
+// Handle grade update for assessments
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_grade']) && $loggedInUserRole == 'Teacher') {
     $assessment = $_POST['assessment'];
     $newGrade = $_POST['new_grade'];
@@ -57,6 +65,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_grade']) && $lo
         echo "<p>Grade updated successfully.</p>";
     } else {
         echo "<p>Failed to update grade.</p>";
+    }
+
+    // Refresh to show updated data
+    header("Location: student_performance.php?UserID=" . $UserID);
+    exit();
+}
+
+// Handle exam score update
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_exam']) && $loggedInUserRole == 'Teacher') {
+    $examID = $_POST['exam_id'];
+    $examType = $_POST['exam_type'];
+    $newScore = $_POST['new_score'];
+    $newComment = $_POST['new_comment'];
+
+    $updateExamQuery = $config->prepare("
+        UPDATE exam_scores 
+        SET $examType = ?, Comments_$examType = ?, ScoreTimestamp = NOW()
+        WHERE ExamID = ? AND StudentID = ? AND TeacherID = ?");
+    $updateExamQuery->bind_param("dsiii", $newScore, $newComment, $examID, $UserID, $_SESSION['UserID']);
+
+    if ($updateExamQuery->execute()) {
+        echo "<p>Exam score updated successfully.</p>";
+    } else {
+        echo "<p>Failed to update exam score.</p>";
     }
 
     // Refresh to show updated data
@@ -102,6 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_grade']) && $lo
         <h1>Student Performance</h1>
         <h2><?php echo htmlspecialchars($student['Name']); ?> - <?php echo htmlspecialchars($student['Course']); ?></h2>
         
+        <!-- Assessment Grades Table -->
         <section>
             <h3>Grades and Comments</h3>
             <table>
@@ -137,6 +170,49 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_grade']) && $lo
                             </tr>
                         <?php endif; ?>
                     <?php endforeach; ?>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Exam Scores Table -->
+        <section>
+            <h3>Exam Scores</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Exam</th>
+                        <th>Score</th>
+                        <th>Comment</th>
+                        <th>Timestamp</th>
+                        <?php if ($loggedInUserRole == 'Teacher'): ?>
+                            <th>Update Score</th>
+                        <?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($exam = $examScoresResult->fetch_assoc()): ?>
+                        <?php foreach (['Exam1', 'Exam2'] as $examType): ?>
+                            <?php if (!empty($exam[$examType])): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($examType); ?></td>
+                                    <td><?php echo htmlspecialchars($exam[$examType]); ?></td>
+                                    <td><?php echo htmlspecialchars($exam['Comments_' . $examType]); ?></td>
+                                    <td><?php echo htmlspecialchars($exam['ScoreTimestamp']); ?></td>
+                                    <?php if ($loggedInUserRole == 'Teacher'): ?>
+                                        <td>
+                                            <form method="POST" class="update-grade-form"> <!-- same class for consistent styling -->
+                                                <input type="hidden" name="exam_id" value="<?php echo $exam['ExamID']; ?>">
+                                                <input type="hidden" name="exam_type" value="<?php echo $examType; ?>">
+                                                <input type="number" name="new_score" value="<?php echo $exam[$examType]; ?>" required>
+                                                <input type="text" name="new_comment" value="<?php echo $exam['Comments_' . $examType]; ?>">
+                                                <button type="submit" name="update_exam">Update</button>
+                                            </form>
+                                        </td>
+                                    <?php endif; ?>
+                                </tr>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    <?php endwhile; ?>
                 </tbody>
             </table>
         </section>
