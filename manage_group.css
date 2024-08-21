@@ -1,0 +1,137 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #f4f4f4;
+  }
+  
+  main {
+    flex: 1;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  main h1 {
+    margin-top: 10px;
+    color: #007bff;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInSlideUp 2s forwards;
+    text-align: center;
+  }
+  
+  @keyframes fadeInSlideUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Table styles for manage_group.php */
+  table.manage-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background-color: white;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  table.manage-table th, table.manage-table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+  }
+  
+  table.manage-table th {
+    background-color: #007bff;
+    color: white;
+    text-align: left;
+  }
+  
+  table.manage-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  table.manage-table tr:hover {
+    background-color: #f1f1f1;
+  }
+  
+  table.manage-table td a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  
+  table.manage-table td a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Button styles for manage_group.php */
+  .btn-manage {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    display: inline-block;
+    border: none;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  
+  .btn-manage:hover {
+    background-color: #0056b3;
+    cursor: pointer;
+  }
+  
+  /* Form input styles for manage_group.php */
+  .group-input-container input[type="text"] {
+    padding: 10px;
+    border-radius: 5px;
+    border: 2px solid #007bff;
+    margin-right: 10px;
+    width: 70%;
+    box-sizing: border-box;
+  }
+  
+  .group-input-container button {
+    background-color: #007bff;
+    color: white;
+    border-radius: 5px;
+    border: none;
+    padding: 10px 20px;
+  }
+  
+  .group-input-container button:hover {
+    background-color: #0056b3;
+    cursor: pointer;
+  }
+  
+  /* Other existing styles */
+  .main-header, .footer-content, .footer-bottom {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .nav-container a {
+    color: white;
+    background-color: #0056b3;
+  }
+  
+  .nav-container a:hover {
+    background-color: #003f8b;
+  }
+  

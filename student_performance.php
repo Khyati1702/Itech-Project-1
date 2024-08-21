@@ -110,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_exam']) && $log
 <body>
     <header class="main-header">
         <div class="logo-container">
-            <img class="header-title" src="Images/REAL_SACE.png" alt="SACE Portal Logo">
+            <img class="header-title" src="Images/Real_logo.png" alt="SACE Portal Logo">
             <span class="header-title">SACE Portal</span>
         </div>
         <div class="nav-container">
@@ -135,12 +135,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_exam']) && $log
         <h1>Student Performance</h1>
         <h2><?php echo htmlspecialchars($student['Name']); ?> - <?php echo htmlspecialchars($student['Course']); ?></h2>
         
-        <!-- Download PDF Report Button -->
+        <!-- Download PDF and Word Report Buttons, only visible to Teachers -->
+        <?php if ($loggedInUserRole == 'Teacher'): ?>
         <section>
             <a href="generate_report.php?UserID=<?php echo $UserID; ?>" class="btn btn-primary">Download PDF Report</a>
             <a href="generate_word_report.php?UserID=<?php echo $UserID; ?>" class="btn btn-primary">Download Word Report</a>
-
         </section>
+        <?php endif; ?>
 
         <!-- Assessment Grades Table -->
         <section>

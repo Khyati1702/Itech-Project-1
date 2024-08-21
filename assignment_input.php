@@ -163,7 +163,7 @@ if ($view == 'student' && $student_id) {
 <body>
 <header class="main-header">
     <div class="logo-container">
-        <img class="header-title" src="Images/REAL_SACE.png" alt="SACE Portal Logo">
+        <img class="header-title" src="Images/Real_logo.png" alt="SACE Portal Logo">
         <span class="header-title">SACE Portal</span>
     </div>
     <div class="nav-container">

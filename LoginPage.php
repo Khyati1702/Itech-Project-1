@@ -1,13 +1,12 @@
 <?php
+session_start();
 require 'configure.php';
 require_once 'vendor/autoload.php';
-session_start();
 
-// Use environment variables for sensitive information
+// Google OAuth Client Configuration
 $clientID = '704453595817-2qrd8v8c2rhgl75qvv8iumu11864mo22.apps.googleusercontent.com';
 $clientSecret = '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';
 $redirectUri = 'http://localhost/DraftWebsite/Mainpage.php'; 
-
 
 // Create Google Client
 $client = new Google_Client();
@@ -42,7 +41,8 @@ if (isset($_GET['code'])) {
         $user = mysqli_fetch_assoc($query);
         $_SESSION['Username'] = $user['Username'];
         $_SESSION['Role'] = $user['Role'];
-        $_SESSION['UserID'] = $user['UserID']; // Ensure UserID is set in session
+        $_SESSION['UserID'] = $user['UserID'];
+        $_SESSION['CourseID'] = $user['CourseID']; // Set CourseID in session
         header('Location: Mainpage.php');
         exit();
     } else {
@@ -53,6 +53,11 @@ if (isset($_GET['code'])) {
             $_SESSION['Username'] = $name;
             $_SESSION['Role'] = 'Student';
             $_SESSION['UserID'] = $newUserID;
+
+            // Assume CourseID must be assigned here if applicable
+            // You might need to decide how to handle CourseID for new users
+            $_SESSION['CourseID'] = null; // or assign a default CourseID
+
             header('Location: Mainpage.php');
             exit();
         } else {
@@ -72,7 +77,8 @@ if (isset($_POST['submit_btn'])) {
         $user = mysqli_fetch_array($query);
         $_SESSION['Username'] = $user['Username'];
         $_SESSION['Role'] = $user['Role'];
-        $_SESSION['UserID'] = $user['UserID']; // Ensure UserID is set in session
+        $_SESSION['UserID'] = $user['UserID'];
+        $_SESSION['CourseID'] = $user['CourseID']; // Set CourseID in session
         header('Location: Mainpage.php');
         exit();
     } else {
@@ -100,7 +106,7 @@ if (isset($_POST['submit_btn'])) {
 
     <div class="container" id="Login">
         <div class="toplogin">
-            <img src="Images/REAL_SACE.png" alt="SACE Logo">
+            <img src="Images/Real_logo.png" alt="SACE Logo">
             <h1 id="verticleline"></h1>
             <h1 id="sacename">SACE Portal</h1>
         </div>
