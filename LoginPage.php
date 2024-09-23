@@ -1,93 +1,66 @@
 <?php
 session_start();
 require 'configure.php';
-require_once 'vendor/autoload.php';
+require_once 'vendor/autoload.php'; 
 
-// Google OAuth Client Configuration
-$clientID = '704453595817-2qrd8v8c2rhgl75qvv8iumu11864mo22.apps.googleusercontent.com';
-$clientSecret = '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';
-$redirectUri = 'http://localhost/DraftWebsite/Mainpage.php'; 
+// Add Google Client configuration here 
+$googleClient = new Google_Client();
+$googleClient->setClientId();
+$googleClient->setClientSecret();
+$googleClient->setRedirectUri(); 
+$googleClient->addScope("email");
+$googleClient->addScope("profile");
 
-// Create Google Client
-$client = new Google_Client();
-$client->setClientId($clientID);
-$client->setClientSecret($clientSecret);
-$client->setRedirectUri($redirectUri);
-$client->addScope("email");
-$client->addScope("profile");
 
-// Google Login URL
-$googleLoginUrl = $client->createAuthUrl();
-
-// Handle OAuth response
-if (isset($_GET['code'])) {
-    $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
-    if (isset($token['error'])) {
-        echo "Error fetching token: " . $token['error'];
-        exit();
-    }
-    $client->setAccessToken($token['access_token']);
-
-    // Get profile info
-    $google_oauth = new Google_Service_Oauth2($client);
-    $google_account_info = $google_oauth->userinfo->get();
-    $email = $google_account_info->email;
-    $name = $google_account_info->name;
-
-    // Check if user exists in the database
-    $select = "SELECT * FROM users WHERE GoogleEmail='$email'";
-    $query = mysqli_query($config, $select);
-    if (mysqli_num_rows($query) > 0) {
-        $user = mysqli_fetch_assoc($query);
-        $_SESSION['Username'] = $user['Username'];
-        $_SESSION['Role'] = $user['Role'];
-        $_SESSION['UserID'] = $user['UserID'];
-        $_SESSION['CourseID'] = $user['CourseID']; // Set CourseID in session
-        header('Location: Mainpage.php');
-        exit();
-    } else {
-        // New user, insert into database
-        $insert = "INSERT INTO users (Username, GoogleEmail, Role) VALUES ('$name', '$email', 'Student')";
-        if (mysqli_query($config, $insert)) {
-            $newUserID = mysqli_insert_id($config); // Get the new UserID
-            $_SESSION['Username'] = $name;
-            $_SESSION['Role'] = 'Student';
-            $_SESSION['UserID'] = $newUserID;
-
-            // Assume CourseID must be assigned here if applicable
-            // You might need to decide how to handle CourseID for new users
-            $_SESSION['CourseID'] = null; // or assign a default CourseID
-
-            header('Location: Mainpage.php');
-            exit();
-        } else {
-            echo "Error: " . mysqli_error($config);
-        }
-    }
+if (isset($_GET['google_login'])) {
+    $googleLoginUrl = $googleClient->createAuthUrl(); // Generate Google OAuth URL
+    header('Location: ' . filter_var($googleLoginUrl, FILTER_SANITIZE_URL)); 
+    exit();
 }
 
-if (isset($_POST['submit_btn'])) {
-    $email = $_POST['username'];
-    $loginpass = $_POST['password'];
-    $select = "SELECT * FROM users WHERE Username='$email' AND Password='$loginpass'";
-    $query = mysqli_query($config, $select);
-    $row = mysqli_num_rows($query);
 
-    if ($row == 1) {
-        $user = mysqli_fetch_array($query);
-        $_SESSION['Username'] = $user['Username'];
-        $_SESSION['Role'] = $user['Role'];
-        $_SESSION['UserID'] = $user['UserID'];
-        $_SESSION['CourseID'] = $user['CourseID']; // Set CourseID in session
-        header('Location: Mainpage.php');
-        exit();
+
+if (isset($_POST['submit_btn'])) {
+    $username = $_POST['username'];
+    $loginpass = $_POST['password'];
+
+    // Check if user exists in the database
+    $select = "SELECT * FROM users WHERE Username=?";
+    $stmt = $config->prepare($select);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows == 1) {
+        $user = $result->fetch_assoc();
+
+        // Verify password (if hashed)
+        if (password_verify($loginpass, $user['PasswordHash']) || $loginpass === $user['Password']) {
+            // Set session and redirect based on role
+            $_SESSION['Username'] = $user['Username'];
+            $_SESSION['Role'] = $user['Role'];
+            $_SESSION['UserID'] = $user['UserID'];
+            $_SESSION['CourseID'] = $user['CourseID'];
+
+            if ($user['Role'] == 'Admin') {
+                header('Location: Mainpage.php'); 
+            } else {
+                header('Location: Mainpage.php'); 
+            }
+            exit();
+        } else {
+            $_SESSION['error'] = "Invalid Username or Password";
+            header('Location: LoginPage.php');
+            exit();
+        }
     } else {
-        $_SESSION['error'] = "<div style='background-color:var(--primary-color); color:black; padding:5px; margin:0px 150px 15px 150px; border:2px white solid'>Invalid Username or Password</div>";
+        $_SESSION['error'] = "Invalid Username or Password";
         header('Location: LoginPage.php');
         exit();
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,11 +72,6 @@ if (isset($_POST['submit_btn'])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
-    <style>
-        .googleicon { margin-bottom: 20px; }
-        .or { margin-bottom: 20px; }
-    </style>
-
     <div class="container" id="Login">
         <div class="toplogin">
             <img src="Images/Real_logo.png" alt="SACE Logo">
@@ -115,7 +83,10 @@ if (isset($_POST['submit_btn'])) {
         <h1 id="logintitle">Login</h1>
         <form action="" method="POST">
             <div class="googleicon">
-                <a href="<?php echo $googleLoginUrl; ?>"><i class="fab fa-google"></i><b><p id="googlelink">Login With Google</p></b></a>
+                
+                <a href="?google_login=true">
+                    <img src="https://developers.google.com/identity/images/btn_google_signin_dark_normal_web.png" alt="Sign in with Google">
+                </a>
             </div>
             <p class="or">---------OR----------</p>
             <div class="forumtext">
@@ -129,8 +100,7 @@ if (isset($_POST['submit_btn'])) {
                 <input class="sbmt" type="submit" id="submitbtn" name="submit_btn" value="Log in">
                 <?php
                 if (isset($_SESSION['error'])) {
-                    $errormsg = $_SESSION['error'];
-                    echo $errormsg;
+                    echo "<div class='error'>" . $_SESSION['error'] . "</div>";
                     unset($_SESSION['error']);
                 }
                 ?>
