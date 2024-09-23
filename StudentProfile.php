@@ -9,6 +9,8 @@ include 'configure.php';
 
 if (isset($_GET['UserID'])) {
     $UserID = $_GET['UserID'];
+
+    // Fetch user details directly from the users table, including the Course column
     $query = "SELECT * FROM users WHERE UserID = ?";
     $stmt = $config->prepare($query);
     $stmt->bind_param("i", $UserID);
@@ -19,6 +21,10 @@ if (isset($_GET['UserID'])) {
     header('Location: Profile.php');
     exit();
 }
+
+// Handle missing or null contact and course fields
+$contact = isset($user['Contact']) && !empty($user['Contact']) ? $user['Contact'] : "Not Provided";
+$course = isset($user['Course']) && !empty($user['Course']) ? $user['Course'] : "Not Assigned"; // Fetch the course field
 ?>
 
 <!DOCTYPE html>
@@ -31,89 +37,41 @@ if (isset($_GET['UserID'])) {
     <link rel="stylesheet" href="colors.css">
 </head>
 <body>
-<header class="main-header">
-    <div class="logo-container">
-        <img class="header-title" src="Images/Real_logo.png" alt="SACE Portal Logo">
-        <span class="header-title">SACE Portal</span>
-    </div>
-    <div class="nav-container">
-        <span class="menu-toggle" onclick="toggleMenu()">☰</span>
-        <nav class="main-nav">
-            <a href="Mainpage.php">Home</a>
-            <a href="assignment.php">Grading</a>
-            <a href="Profile.php">Students</a>
-            <a href="#">Contact</a>
-            <a href="#">Help</a>
-        </nav>
-        <div class="search-container">
-            <input type="search" placeholder="Search">
-            <form action="logout.php" method="post">
-                <button type="submit" class="logout-button">Logout</button>
-            </form>
-        </div>
-    </div>
-</header>
+<?php include 'navbar.php'; ?>
 
     <main>
+    <div class="profile-card">
         <h1>Student Profile</h1>
-        <div class="profile-container">
-            <div class="user-details">
+        <div class="profile-content"> <!-- Same container class for layout consistency -->
+            <div class="user-details"> <!-- User details section -->
                 <h2>User details</h2>
                 <p><strong>Name:</strong> <?php echo htmlspecialchars($user['Name']); ?></p>
-                <p><strong>Email address:</strong> <?php echo htmlspecialchars($user['Username']); ?></p>
-                <p><strong>Contact:</strong> <?php echo htmlspecialchars($user['Contact']); ?></p>
+                <p><strong>Email address:</strong> <?php echo htmlspecialchars($user['GoogleEmail']); ?></p>
+                <!-- Contact info only if available, else show 'Not Provided' -->
+                <p><strong>Contact:</strong> <?php echo htmlspecialchars($contact); ?></p>
             </div>
-            <div class="course-details">
+
+            <div class="course-details"> <!-- Course details section with previous class -->
                 <h2>Course details</h2>
-                <p><strong>Role:</strong> <?php echo htmlspecialchars($user['Role']); ?></p>
-                <p><strong>Course:</strong> <?php echo htmlspecialchars($user['Course']); ?></p>
+                <p><strong>Course:</strong> <?php echo htmlspecialchars($course); ?></p> <!-- Display course -->
             </div>
-            <div class="reports">
+
+            <div class="reports"> <!-- Reports section with previous class -->
                 <h2>Reports</h2>
                 <ul>
                     <li><a href="student_performance.php?UserID=<?php echo $UserID; ?>">Performance</a></li>
                 </ul>
             </div>
         </div>
+</div>
     </main>
 
-<footer class="main-footer">
-    <div class="footer-content">
-        <div class="quick-links">
-            <h3>Quick Links</h3>
-            <ul>
-                <li><a href="#">Home</a></li>
-                <li><a href="#">Services</a></li>
-                <li><a href="#">Student Info</a></li>
-                <li><a href="#">Contacts</a></li>
-                <li><a href="#">Help</a></li>
-            </ul>
-        </div>
-        <div class="contact-us">
-            <h3>Contact Us</h3>
-            <ul>
-                <li><a href="#">Instagram</a></li>
-                <li><a href="#">Facebook</a></li>
-                <li><a href="#">YouTube</a></li>
-            </ul>
-        </div>
-        <div class="address">
-            <h3>Address</h3>
-            <p>Level 5/118 King William St<br>Adelaide, SA<br>Phone: (08) 5555 5555</p>
-        </div>
-    </div>
-    <div class="footer-bottom">
-        <img src="Images/REAL_SACE.png" alt="SACE Portal Logo">
-        <p>&copy; SACE Student Portal</p>
-    </div>
-</footer>
-
+    <?php include 'footer.php'; ?>
 
     <script>
         function toggleMenu() {
             const nav = document.querySelector('.main-nav');
             nav.classList.toggle('active');
-            console.log('Menu toggled.');
         }
     </script>
 </body>

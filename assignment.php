@@ -2,8 +2,8 @@
 session_start();
 require 'configure.php';
 
-// Check if the user is logged in and is a teacher
-if (!isset($_SESSION['Username']) || $_SESSION['Role'] != 'Teacher') {
+// Check if the user is logged in and is a Teacher or Admin
+if (!isset($_SESSION['Username']) || ($_SESSION['Role'] != 'Teacher' && $_SESSION['Role'] != 'Admin')) {
     header('Location: LoginPage.php');
     exit();
 }
@@ -29,6 +29,7 @@ $stage2Assessments = [
     "Response in English"
 ];
 
+/*
 $stage1Exams = [
     "Midterm Exam",
     "Final Exam"
@@ -38,6 +39,7 @@ $stage2Exams = [
     "Midterm Exam",
     "Final Exam"
 ];
+*/
 ?>
 
 <!DOCTYPE html>
@@ -50,28 +52,7 @@ $stage2Exams = [
     <link rel="stylesheet" href="assignmentnew.css">
 </head>
 <body>
-<header class="main-header">
-    <div class="logo-container">
-        <img class="header-title" src="Images/Real_logo.png" alt="SACE Portal Logo">
-        <span class="header-title">SACE Portal</span>
-    </div>
-    <div class="nav-container">
-        <span class="menu-toggle" onclick="toggleMenu()">☰</span>
-        <nav class="main-nav">
-            <a href="Mainpage.php">Home</a>
-            <a href="assignment.php">Grading</a>
-            <a href="Profile.php">Students</a>
-            <a href="#">Contact</a>
-            <a href="#">Help</a>
-        </nav>
-        <div class="search-container">
-            <input type="search" placeholder="Search">
-            <form action="logout.php" method="post">
-                <button type="submit" class="logout-button">Logout</button>
-            </form>
-        </div>
-    </div>
-</header>
+<?php include 'navbar.php'; ?>
 
 <main>
     <h1>Input Student Scores</h1>
@@ -85,12 +66,12 @@ $stage2Exams = [
         <div class="toggle-buttons">
             <button id="stage1StudentsButton" class="toggle-button active" onclick="showStage1Students()">Stage 1 Students</button>
             <button id="stage1AssessmentsButton" class="toggle-button" onclick="showStage1Assessments()">Stage 1 Assessments</button>
-            <button id="stage1ExamsButton" class="toggle-button" onclick="showStage1Exams()">Stage 1 Exams</button>
+            <!-- <button id="stage1ExamsButton" class="toggle-button" onclick="showStage1Exams()">Stage 1 Exams</button> -->
         </div>
 
         <!-- Stage 1 Students List -->
         <div id="stage1StudentsList" class="table-container">
-            <h2>Stage 1 Students</h2>
+            <h2>Stage 1: Students</h2>
             <table>
                 <thead>
                     <tr>
@@ -111,7 +92,7 @@ $stage2Exams = [
 
         <!-- Stage 1 Assessments List -->
         <div id="stage1AssessmentsList" class="table-container" style="display:none;">
-            <h2>Stage 1 Assessments</h2>
+            <h2>Stage 1: Assessments</h2>
             <table>
                 <thead>
                     <tr>
@@ -132,9 +113,10 @@ $stage2Exams = [
             </table>
         </div>
 
-        <!-- Stage 1 Exams List -->
+        <!-- Stage 1 Exams List (Commented Out) -->
+        <!--
         <div id="stage1ExamsList" class="table-container" style="display:none;">
-            <h2>Stage 1 Exams</h2>
+            <h2>Stage 1: Exams</h2>
             <table>
                 <thead>
                     <tr>
@@ -154,6 +136,7 @@ $stage2Exams = [
                 </tbody>
             </table>
         </div>
+        -->
     </div>
 
     <!-- Stage 2 Container -->
@@ -161,12 +144,12 @@ $stage2Exams = [
         <div class="toggle-buttons">
             <button id="stage2StudentsButton" class="toggle-button active" onclick="showStage2Students()">Stage 2 Students</button>
             <button id="stage2AssessmentsButton" class="toggle-button" onclick="showStage2Assessments()">Stage 2 Assessments</button>
-            <button id="stage2ExamsButton" class="toggle-button" onclick="showStage2Exams()">Stage 2 Exams</button>
+            <!-- <button id="stage2ExamsButton" class="toggle-button" onclick="showStage2Exams()">Stage 2 Exams</button> -->
         </div>
 
         <!-- Stage 2 Students List -->
         <div id="stage2StudentsList" class="table-container">
-            <h2>Stage 2 Students</h2>
+            <h2>Stage 2: Students</h2>
             <table>
                 <thead>
                     <tr>
@@ -187,7 +170,7 @@ $stage2Exams = [
 
         <!-- Stage 2 Assessments List -->
         <div id="stage2AssessmentsList" class="table-container" style="display:none;">
-            <h2>Stage 2 Assessments</h2>
+            <h2>Stage 2: Assessments</h2>
             <table>
                 <thead>
                     <tr>
@@ -208,9 +191,10 @@ $stage2Exams = [
             </table>
         </div>
 
-        <!-- Stage 2 Exams List -->
+        <!-- Stage 2 Exams List (Commented Out) -->
+        <!--
         <div id="stage2ExamsList" class="table-container" style="display:none;">
-            <h2>Stage 2 Exams</h2>
+            <h2>Stage 2: Exams</h2>
             <table>
                 <thead>
                     <tr>
@@ -230,39 +214,12 @@ $stage2Exams = [
                 </tbody>
             </table>
         </div>
+        -->
     </div>
 </main>
 
-<footer class="main-footer">
-    <div class="footer-content">
-        <div class="quick-links">
-            <h3>Quick Links</h3>
-            <ul>
-                <li><a href="#">Home</a></li>
-                <li><a href="#">Services</a></li>
-                <li><a href="#">Student Info</a></li>
-                <li><a href="#">Contacts</a></li>
-                <li><a href="#">Help</a></li>
-            </ul>
-        </div>
-        <div class="contact-us">
-            <h3>Contact Us</h3>
-            <ul>
-                <li><a href="#">Instagram</a></li>
-                <li><a href="#">Facebook</a></li>
-                <li><a href="#">YouTube</a></li>
-            </ul>
-        </div>
-        <div class="address">
-            <h3>Address</h3>
-            <p>Level 5/118 King William St<br>Adelaide, SA<br>Phone: (08) 5555 5555</p>
-        </div>
-    </div>
-    <div class="footer-bottom">
-        <img src="Images/REAL_SACE.png" alt="SACE Portal Logo">
-        <p>&copy; SACE Student Portal</p>
-    </div>
-</footer>
+<?php include 'footer.php'; ?>
+
 
 <script>
     function showStage1() {
@@ -282,21 +239,22 @@ $stage2Exams = [
     function showStage1Students() {
         document.getElementById('stage1StudentsList').style.display = 'block';
         document.getElementById('stage1AssessmentsList').style.display = 'none';
-        document.getElementById('stage1ExamsList').style.display = 'none';
+        /* document.getElementById('stage1ExamsList').style.display = 'none'; */
         document.getElementById('stage1StudentsButton').classList.add('active');
         document.getElementById('stage1AssessmentsButton').classList.remove('active');
-        document.getElementById('stage1ExamsButton').classList.remove('active');
+        /* document.getElementById('stage1ExamsButton').classList.remove('active'); */
     }
 
     function showStage1Assessments() {
         document.getElementById('stage1StudentsList').style.display = 'none';
         document.getElementById('stage1AssessmentsList').style.display = 'block';
-        document.getElementById('stage1ExamsList').style.display = 'none';
+        /* document.getElementById('stage1ExamsList').style.display = 'none'; */
         document.getElementById('stage1StudentsButton').classList.remove('active');
         document.getElementById('stage1AssessmentsButton').classList.add('active');
-        document.getElementById('stage1ExamsButton').classList.remove('active');
+        /* document.getElementById('stage1ExamsButton').classList.remove('active'); */
     }
 
+    /*
     function showStage1Exams() {
         document.getElementById('stage1StudentsList').style.display = 'none';
         document.getElementById('stage1AssessmentsList').style.display = 'none';
@@ -305,25 +263,27 @@ $stage2Exams = [
         document.getElementById('stage1AssessmentsButton').classList.remove('active');
         document.getElementById('stage1ExamsButton').classList.add('active');
     }
+    */
 
     function showStage2Students() {
         document.getElementById('stage2StudentsList').style.display = 'block';
         document.getElementById('stage2AssessmentsList').style.display = 'none';
-        document.getElementById('stage2ExamsList').style.display = 'none';
+        /* document.getElementById('stage2ExamsList').style.display = 'none'; */
         document.getElementById('stage2StudentsButton').classList.add('active');
         document.getElementById('stage2AssessmentsButton').classList.remove('active');
-        document.getElementById('stage2ExamsButton').classList.remove('active');
+        /* document.getElementById('stage2ExamsButton').classList.remove('active'); */
     }
 
     function showStage2Assessments() {
         document.getElementById('stage2StudentsList').style.display = 'none';
         document.getElementById('stage2AssessmentsList').style.display = 'block';
-        document.getElementById('stage2ExamsList').style.display = 'none';
+        /* document.getElementById('stage2ExamsList').style.display = 'none'; */
         document.getElementById('stage2StudentsButton').classList.remove('active');
         document.getElementById('stage2AssessmentsButton').classList.add('active');
-        document.getElementById('stage2ExamsButton').classList.remove('active');
+        /* document.getElementById('stage2ExamsButton').classList.remove('active'); */
     }
 
+    /*
     function showStage2Exams() {
         document.getElementById('stage2StudentsList').style.display = 'none';
         document.getElementById('stage2AssessmentsList').style.display = 'none';
@@ -332,6 +292,7 @@ $stage2Exams = [
         document.getElementById('stage2AssessmentsButton').classList.remove('active');
         document.getElementById('stage2ExamsButton').classList.add('active');
     }
+    */
 
     // Initialize the page with Stage 1 Students visible
     showStage1();

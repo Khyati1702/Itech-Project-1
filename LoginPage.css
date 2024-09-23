@@ -14,7 +14,7 @@ body {
     justify-content: center;
     align-items: center;
     background-color: var(--background-color);
-    background-image: url(Images/Scenary_background.png); /* Changed "Eximages" to "Images" */
+    background-image: url(Images/Scenary_background.png); 
     background-repeat: no-repeat;
     background-position: center center;
     background-size: cover;
@@ -24,38 +24,53 @@ body {
 .container {
     background-color: var(--background-color);
     width: 50vw;
+    max-width: 600px;
     padding: 1.5vw;
     border: white solid 5px;
-    height: 65vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
+    min-height: 65vh; 
+    box-sizing: border-box;
 }
 
 .toplogin {
     display: flex;
     justify-content: center;
     align-items: center;
+    text-align: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    margin-bottom: 10px; 
 }
 
 .toplogin img {
     border: solid 2px white; 
-    width: 103px;
-    height: 90px;
+    width: 80px;
+    height: 80px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
     border-radius: 5px;
 }
 
 #sacename {
-    margin-left: 2px;
-    font-size: 30px;
+    font-size: 24px;
     color: var(--third-color);
 }
 
 #verticleline {
     border-left: 3px solid white;
-    height: 95px;
-    margin-left: 8px; 
+    height: 80px;
+    margin-left: 8px;
+}
+
+#horizontalline {
+    width: 90%; /* Ensure the line spans most of the container width */
+    height: 3px;
+    border: none;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    background-color: var(--third-color);
 }
 
 #logintitle {
@@ -65,21 +80,10 @@ body {
     color: var(--third-color);
 }
 
-#horizontalline {
-    height: 3px;
-    border: none;
-    margin-top: 8px;
-    margin-bottom: 8px;
-    background-color: var(--third-color);
-}
-
 form {
     text-align: center;
     margin: 0 2rem;
-}
-
-#passlabel {
-    margin-left: -1px;
+    width: 100%;
 }
 
 input {
@@ -127,23 +131,84 @@ input {
 }
 
 form .googleicon {
-    overflow: hidden;
+    display: flex;
+    justify-content: center;
     align-items: center;
+    height: 35px; 
+    margin-bottom: 20px;
     margin-top: 2.5%;
     margin-left: 20%;
     margin-right: 20%;
     border: black solid 1.5px;
-    border-radius: 25px;
-    background-color: var(--primary-color);
-    margin-bottom: 25px;
+    border-radius: 4px;
+    background-color: var(--third-color);
 }
 
-.googleicon a:link {
+.googleicon a {
     color: var(--text-color);
-    background-color: transparent;
     text-decoration: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%; 
+}
+
+.googleicon i {
+    margin-right: 10px; 
+    font-size: 18px; 
 }
 
 .googleicon:hover {
     background-color: var(--primary-color);
+}
+
+
+@media (max-width: 768px) {
+    .container {
+        width: 80vw;
+        max-width: 400px;
+        padding: 20px;
+    }
+
+    .toplogin {
+        flex-direction: row; 
+    }
+
+    #sacename {
+        font-size: 20px;
+    }
+
+    #verticleline {
+        height: 60px;
+    }
+
+    input {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        width: 90vw;
+        max-width: 300px;
+        padding: 15px;
+    }
+
+    .toplogin img {
+        width: 60px;
+        height: 60px;
+    }
+
+    #sacename {
+        font-size: 18px;
+    }
+
+    #verticleline {
+        height: 50px;
+    }
+
+    input {
+        font-size: 14px;
+    }
 }

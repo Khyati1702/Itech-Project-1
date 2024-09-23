@@ -25,6 +25,4 @@ if(isset($_POST['login_btn']))
         $row=mysqli_num_rows($query);
         echo $row;
        
-    }
-
-        ?>
+    }?>

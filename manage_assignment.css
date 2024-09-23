@@ -1,0 +1,134 @@
+/* General form styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-image: url(Images/Scenary_background.png);
+    background-size: cover;
+    background-position: center;
+    border: solid 2px var(--third-color);
+    
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    overflow-x: auto; /* Add horizontal scrolling for small screens */
+    text-align: center;
+    
+  }
+  
+  table th, table td {
+    border: 2px solid var(--primary-color);
+    padding: 8px;
+    background-color: var(--third-color);
+    word-wrap: break-word; /* Prevent text from overflowing */
+
+  }
+  
+  table th {
+    background-color: var(--background-color);
+    color: var(--third-color);
+    text-align: center;
+  }
+  
+  table tr:nth-child(even) {
+    background-color: var(--primary-color);
+  }
+  
+  table tr:hover {
+    background-color: var(--third-color);
+  }
+  
+  table td a {
+    color: var(--background-color);
+    text-decoration: none;
+    font-weight: bold;
+  }
+  
+  table td a:hover {
+    text-decoration: underline;
+  }
+
+
+
+
+tbody td a:hover {
+    background-color: var(--third-color); /* Darker blue on hover */
+}
+
+/* Delete button styling */
+.delete_assignment_btn ,.update_dates_btn{
+    background: var(--primary-color); /* Transparent button */
+    color: var(--text-color);
+    padding: 5px 10px;
+    border: solid 3px var(--third-color); /* Glassy border */
+    border-radius: 8px; /* Rounded corners for the button */
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.2), inset 1px 1px 5px rgba(255, 255, 255, 0.2); /* Soft shadow */
+}
+
+.delete_assignment_btn:hover {
+    background-color: var(--third-color); /* Change background on hover */
+    color: var(--text-color); /* Change text color on hover */
+}
+.update_dates_btn:hover {
+    background-color: var(--third-color); /* Change background on hover */
+    color: var(--text-color); /* Change text color on hover */
+}
+
+input[type="date"],
+select {
+    padding: 5px 15px;
+    margin-bottom: 20px;
+    border: 1px solid var(--heading-color); /* Glassy border */
+    border-radius: 10px; /* Rounded corners */
+    background: var(--third-color); /* Transparent input background */
+    backdrop-filter: blur(5px); /* Slight blur inside inputs */
+    -webkit-backdrop-filter: blur(5px);
+    font-size: 0.8rem;
+    color: #002147; /* Blue text color for consistency */
+    box-shadow: inset 2px 2px 8px rgba(255, 255, 255, 0.2); /* Inner shadow */
+}
+
+    input[type="date"]:focus,
+    select:focus {
+        border-color: rgba(255, 255, 255, 0.6); /* Brighter on focus */
+        outline: none;
+        box-shadow: 0 0 8px rgba(100, 149, 237, 0.6); /* Light blue glow */
+    }
+/* Centering the table */
+h1 {
+    text-align: center;
+    margin: 0 auto; /* Horizontally center */
+    margin-top: 20px;
+    margin-bottom: 20px;
+    color: var(--heading-color);
+    font-size: 2rem;
+    font-weight: bold;
+    padding: 20px;
+   
+}
+
+/* Responsive styling for mobile screens */
+@media (max-width: 768px) {
+    table {
+        width: 100%; /* Make table take up full width on smaller screens */
+    }
+
+    thead th, tbody td {
+        font-size: 0.9rem;
+        padding: 8px;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+}

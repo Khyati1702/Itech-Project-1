@@ -5,21 +5,21 @@ error_reporting(E_ALL);
 
 session_start();
 require 'configure.php';
-
-// Load Composer's autoloader
 require 'vendor/autoload.php';
 
 use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\IOFactory;
+use PhpOffice\PhpWord\Style\Table;
 use PhpOffice\PhpWord\SimpleType\TblWidth;
-use PhpOffice\PhpWord\Style\TablePosition;
+use PhpOffice\PhpWord\Shared\Converter;
 
-// Ensure user is logged in
+// Check if the user is logged in
 if (!isset($_SESSION['Username'])) {
     header('Location: LoginPage.php');
     exit();
 }
 
-// Ensure UserID is set
+// Check if the UserID is provided in the URL
 if (!isset($_GET['UserID'])) {
     header('Location: Profile.php');
     exit();
@@ -34,85 +34,230 @@ $query->bind_param("i", $UserID);
 $query->execute();
 $result = $query->get_result();
 $student = $result->fetch_assoc();
+$studentName = $student['Name'];
+$studentCourse = $student['Course'];
 $studentRole = $student['Role'];
 
-// Fetch teacher information (assuming the current logged-in user is the teacher)
-$teacherName = $_SESSION['Username'];
+// Fetch current teacher name
+$teacherQuery = $config->prepare("SELECT Name FROM users WHERE UserID = ?");
+$teacherQuery->bind_param("i", $_SESSION['UserID']);
+$teacherQuery->execute();
+$teacherResult = $teacherQuery->get_result();
+$teacher = $teacherResult->fetch_assoc();
+$teacherName = $teacher['Name'] ?? 'N/A'; // Use 'N/A' if teacher's name is not found
 
-// Determine the assessments to display based on the student's role
-$assessments = ($studentRole == 'Stage1Students') ? [
-    "Interaction", "Text_Analysis", "Text_Production", 
-    "Investigation_Task_Part_A", "Investigation_Task_Part_B"
-] : [
-    "Interaction", "Text_Analysis", "Text_Production", 
-    "Oral_Presentation", "Response_Japanese", "Response_English"
-];
-
-// Fetch grades and comments from gradings table
-$gradesQuery = $config->prepare("SELECT * FROM gradings WHERE StudentID = ?");
+// Fetch grades from the gradings table
+$gradesQuery = $config->prepare("SELECT * FROM gradings WHERE StudentID = ? ORDER BY GradingTimestamp DESC LIMIT 1");
 $gradesQuery->bind_param("i", $UserID);
 $gradesQuery->execute();
 $gradesResult = $gradesQuery->get_result();
 $grades = $gradesResult->fetch_assoc();
 
-// Fetch exam scores and comments from exam_scores table
-$examScoresQuery = $config->prepare("SELECT * FROM exam_scores WHERE StudentID = ?");
-$examScoresQuery->bind_param("i", $UserID);
-$examScoresQuery->execute();
-$examScoresResult = $examScoresQuery->get_result();
+if (!$grades) {
+    echo "No grades available for this student.";
+    exit();
+}
 
-// Create a new Word document
+$teacherNote = $grades['TeacherNote'] ?? 'No notes available'; // Handle null values for TeacherNote
+
+// Initialize PhpWord object
 $phpWord = new PhpWord();
 $section = $phpWord->addSection();
 
-// Add Student Information
-$section->addText('Student Performance Report', ['bold' => true, 'size' => 16, 'align' => 'center']);
-$section->addText('Name: ' . $student['Name']);
-$section->addText('Course: ' . $student['Course']);
-$section->addText('Teacher: ' . $teacherName);  // Added teacher name
-$section->addTextBreak(2);
+// Determine whether the student is in Stage 1 or Stage 2
+if ($studentRole == 'Stage1Students') {
+    // Stage 1: Add Title and Subtitle
+    $section->addText('SACE Stage 1', ['bold' => true, 'size' => 16, 'alignment' => 'center'], ['alignment' => 'center']);
+    $section->addText('Student Report', ['bold' => true, 'size' => 20, 'alignment' => 'center'], ['alignment' => 'center']);
+    $section->addTextBreak(1);
 
-// Add Assessment Grades Table
-$section->addText('Assessment Grades', ['bold' => true, 'size' => 14]);
+    // Add Student Information in a table
+    $table = $section->addTable([
+        'borderSize' => 6, 
+        'borderColor' => '000000', 
+        'alignment' => 'center',
+        'width' => 100 * 50, // 100% width
+    ]);
 
-$table = $section->addTable(['borderSize' => 6, 'borderColor' => '000000', 'cellMargin' => 50]);
-$table->addRow();
-$table->addCell(5000)->addText('Assessment');
-$table->addCell(2000)->addText('Grade');
-$table->addCell(8000)->addText('Comment');
+    $table->addRow();
+    $table->addCell(9000)->addText('Student: ' . $studentName, ['bold' => true]);
+    $table->addRow();
+    $table->addCell(9000)->addText('Course: ' . $studentCourse, ['bold' => true]);
+    $table->addRow();
+    $table->addCell(9000)->addText('Teacher: ' . $teacherName, ['bold' => true]);
 
-foreach ($assessments as $assessment) {
-    if (!empty($grades[$assessment]) || !empty($grades['Comments_' . $assessment])) {
-        $table->addRow();
-        $table->addCell(5000)->addText(str_replace('_', ' ', $assessment));
-        $table->addCell(2000)->addText($grades[$assessment]);
-        $table->addCell(8000)->addText($grades['Comments_' . $assessment]);
-    }
-}
+    $section->addTextBreak(1);
 
-// Add Exam Scores Table
-$section->addTextBreak(2);
-$section->addText('Exam Scores', ['bold' => true, 'size' => 14]);
+    // Add Assessment Table for Stage 1
+    $table = $section->addTable([
+        'borderSize' => 6, 
+        'borderColor' => '000000', 
+        'alignment' => 'center',
+        'width' => 100 * 50, // 100% width
+    ]);
 
-$examTable = $section->addTable(['borderSize' => 6, 'borderColor' => '000000', 'cellMargin' => 50]);
-$examTable->addRow();
-$examTable->addCell(5000)->addText('Exam');
-$examTable->addCell(2000)->addText('Score');
-$examTable->addCell(8000)->addText('Comment');
+    // Add Header Row
+    $table->addRow();
+    $table->addCell(7000)->addText('Summative Assessment Task', ['bold' => true], ['alignment' => 'center']);
+    $table->addCell(2000)->addText('Grade', ['bold' => true], ['alignment' => 'center']);
 
-while ($exam = $examScoresResult->fetch_assoc()) {
-    foreach (['Exam1', 'Exam2'] as $examType) {
-        if (!empty($exam[$examType])) {
-            $examTable->addRow();
-            $examTable->addCell(5000)->addText($examType);
-            $examTable->addCell(2000)->addText($exam[$examType]);
-            $examTable->addCell(8000)->addText($exam['Comments_' . $examType]);
-        }
-    }
+    // Stage 1 Specific Rows
+    $table->addRow();
+    $table->addCell(7000)->addText('Interaction');
+    $table->addCell(2000)->addText($grades['Interaction'] ?? 'N/A');
+
+    $table->addRow();
+    $table->addCell(7000)->addText('Text Analysis');
+    $table->addCell(2000)->addText($grades['Text_Analysis'] ?? 'N/A');
+
+    $table->addRow();
+    $table->addCell(7000)->addText('Text Production');
+    $table->addCell(2000)->addText($grades['Text_Production'] ?? 'N/A');
+
+    $table->addRow();
+    $table->addCell(7000)->addText('Investigation Task Part A: PPT presentation');
+    $table->addCell(2000)->addText($grades['Investigation_Task_Part_A'] ?? 'N/A');
+
+    $table->addRow();
+    $table->addCell(7000)->addText('Investigation Task Part B: Reflective Writing in English');
+    $table->addCell(2000)->addText($grades['Investigation_Task_Part_B'] ?? 'N/A');
+
+    // Add Total Grade Section
+    $section->addTextBreak(3); // Add margin from top
+    $table = $section->addTable([
+        'borderSize' => 6, 
+        'borderColor' => '000000', 
+        'alignment' => 'center',
+        'width' => 50 * 60, // Smaller width for the table
+    ]);
+
+    // Add a row with a single cell for the Total Grade
+    $totalGrade = ($grades['Interaction'] ?? 0) + 
+                  ($grades['Text_Analysis'] ?? 0) + 
+                  ($grades['Text_Production'] ?? 0) + 
+                  ($grades['Investigation_Task_Part_A'] ?? 0) + 
+                  ($grades['Investigation_Task_Part_B'] ?? 0);
+
+    $row = $table->addRow(Converter::cmToTwip(2.5)); // Increase height (2.5 cm)
+    $cell = $row->addCell(Converter::cmToTwip(6)); // Set a smaller width (6 cm)
+    $cell->addText('Total Grade: ' . number_format($totalGrade, 2), ['bold' => true, 'size' => 14], ['alignment' => 'center']);
+    $cell->getStyle()->setVAlign('center'); // Center vertically
+
+    // Add Teacher Notes Section
+    $section->addText('TEACHER NOTES:', ['bold' => true]);
+    $table = $section->addTable([
+        'borderSize' => 6, 
+        'borderColor' => '000000', 
+        'alignment' => 'center',
+        'width' => 100 * 50, // 100% width
+    ]);
+    $table->addRow();
+    $table->addCell(9000)->addText($teacherNote);
+
+} else if ($studentRole == 'Stage2Students') {
+    // Stage 2: Add Title and Subtitle
+    $section->addText('SACE Stage 2', ['bold' => true, 'size' => 16, 'alignment' => 'center'], ['alignment' => 'center']);
+    $section->addText('Student Report', ['bold' => true, 'size' => 20, 'alignment' => 'center'], ['alignment' => 'center']);
+    $section->addTextBreak(1);
+
+    // Add Student Information in a table
+    $table = $section->addTable([
+        'borderSize' => 6, 
+        'borderColor' => '000000', 
+        'alignment' => 'center',
+        'width' => 100 * 50, // 100% width
+    ]);
+
+    $table->addRow();
+    $table->addCell(9000)->addText('Student: ' . $studentName, ['bold' => true]);
+    $table->addRow();
+    $table->addCell(9000)->addText('Course: ' . $studentCourse, ['bold' => true]);
+    $table->addRow();
+    $table->addCell(9000)->addText('Teacher: ' . $teacherName, ['bold' => true]);
+
+    $section->addTextBreak(1);
+
+    // Add Assessment Table for Stage 2
+    $table = $section->addTable([
+        'borderSize' => 6, 
+        'borderColor' => '000000', 
+        'alignment' => 'center',
+        'width' => 100 * 50, // 100% width
+    ]);
+
+    // Add Header Row
+    $table->addRow();
+    $table->addCell(2000, ['gridSpan' => 2])->addText('Summative Assessment Task', ['bold' => true], ['alignment' => 'center']);
+    $table->addCell(2000)->addText('Grade', ['bold' => true], ['alignment' => 'center']);
+
+    // Folio Section
+    $table->addRow();
+    $table->addCell(2000, ['vMerge' => 'restart'])->addText('Folio', ['bold' => true]);
+    $table->addCell(2000)->addText('Interaction');
+    $table->addCell(2000)->addText($grades['Interaction'] ?? 'N/A');
+
+    $table->addRow();
+    $table->addCell(null, ['vMerge' => 'continue']);
+    $table->addCell(2000)->addText('Text Analysis');
+    $table->addCell(2000)->addText($grades['Text_Analysis'] ?? 'N/A');
+
+    $table->addRow();
+    $table->addCell(null, ['vMerge' => 'continue']);
+    $table->addCell(2000)->addText('Text Production');
+    $table->addCell(2000)->addText($grades['Text_Production'] ?? 'N/A');
+
+    // In-Depth Study Section
+    $table->addRow();
+    $table->addCell(2000, ['vMerge' => 'restart'])->addText('In-Depth Study', ['bold' => true]);
+    $table->addCell(2000)->addText('Oral Presentation');
+    $table->addCell(2000)->addText($grades['Oral_Presentation'] ?? 'N/A');
+
+    $table->addRow();
+    $table->addCell(null, ['vMerge' => 'continue']);
+    $table->addCell(2000)->addText('Response in Japanese');
+    $table->addCell(2000)->addText($grades['Response_Japanese'] ?? 'N/A');
+
+    $table->addRow();
+    $table->addCell(null, ['vMerge' => 'continue']);
+    $table->addCell(2000)->addText('Response in English');
+    $table->addCell(2000)->addText($grades['Response_English'] ?? 'N/A');
+
+    // Add Total Grade Section
+    $section->addTextBreak(3); // Add margin from top
+    $table = $section->addTable([
+        'borderSize' => 6, 
+        'borderColor' => '000000', 
+        'alignment' => 'center',
+        'width' => 50 * 60, // Smaller width for the table
+    ]);
+
+    // Add a row with a single cell for the Total Grade
+    $totalGrade = ($grades['Interaction'] ?? 0) + 
+                  ($grades['Text_Analysis'] ?? 0) + 
+                  ($grades['Text_Production'] ?? 0) + 
+                  ($grades['Oral_Presentation'] ?? 0) + 
+                  ($grades['Response_Japanese'] ?? 0) + 
+                  ($grades['Response_English'] ?? 0);
+
+    $row = $table->addRow(Converter::cmToTwip(2.5)); // Increase height (2.5 cm)
+    $cell = $row->addCell(Converter::cmToTwip(6)); // Set a smaller width (6 cm)
+    $cell->addText('Total Grade: ' . number_format($totalGrade, 2), ['bold' => true, 'size' => 14], ['alignment' => 'center']);
+    $cell->getStyle()->setVAlign('center'); // Center vertically
+
+    // Add Teacher Notes Section
+    $section->addText('TEACHER NOTES:', ['bold' => true]);
+    $table = $section->addTable([
+        'borderSize' => 6, 
+        'borderColor' => '000000', 
+        'alignment' => 'center',
+        'width' => 100 * 50, // 100% width
+    ]);
+    $table->addRow();
+    $table->addCell(9000)->addText($teacherNote);
 }
 
 // Save the Word document
-$wordFile = 'student_performance_' . $student['Name'] . '.docx';
+$wordFile = 'student_performance_' . $studentName . '.docx';
 $phpWord->save($wordFile, 'Word2007');
 
 // Offer the file for download
@@ -124,8 +269,8 @@ header('Expires: 0');
 header('Cache-Control: must-revalidate');
 header('Pragma: public');
 header('Content-Length: ' . filesize($wordFile));
-flush(); // Flush system output buffer
+flush();
 readfile($wordFile);
-unlink($wordFile); // Delete the file after download
+unlink($wordFile); 
 exit();
 ?>

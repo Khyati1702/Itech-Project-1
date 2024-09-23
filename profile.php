@@ -27,11 +27,32 @@ if (!$CourseID) {
     die('Course ID is missing!');
 }
 
+// Set default filters
+$searchQuery = isset($_GET['search_query']) ? $_GET['search_query'] : '';
+
+// Build the query for students
 if ($role == 'Teacher') {
-    // Fetch students in the same course
-    $query = "SELECT UserID, Username, Role FROM users WHERE Role IN ('Stage1Students', 'Stage2Students') AND CourseID = ?";
+    $query = "
+        SELECT u.UserID, u.Name, u.Course 
+        FROM users u
+        WHERE u.Role IN ('Stage1Students', 'Stage2Students') 
+        AND u.CourseID = ? ";
+
+    // Modify the query to search by name or course with the same search input
+    if (!empty($searchQuery)) {
+        $query .= "AND (u.Name LIKE ? OR u.Course LIKE ?) ";
+    }
+    
     $stmt = $config->prepare($query);
-    $stmt->bind_param("i", $CourseID);
+
+    // Bind parameters conditionally
+    if (!empty($searchQuery)) {
+        $stmt->bind_param("iss", $CourseID, $searchQueryWildcard, $searchQueryWildcard);
+        $searchQueryWildcard = "%$searchQuery%";
+    } else {
+        $stmt->bind_param("i", $CourseID);
+    }
+
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -47,8 +68,8 @@ if ($role == 'Teacher') {
     $groupQuery->execute();
     $groupResult = $groupQuery->get_result();
 } else {
-    // Fetch only the current user's details
-    $query = "SELECT UserID, Username, Role FROM users WHERE Username = ?";
+    // Fetch only the current user's details, including their Name
+    $query = "SELECT UserID, Name, Course FROM users WHERE Username = ?";
     $stmt = $config->prepare($query);
     $stmt->bind_param("s", $username);
     $stmt->execute();
@@ -70,54 +91,42 @@ if (!$result) {
     <link rel="stylesheet" href="colors.css">
 </head>
 <body>
-<header class="main-header">
-    <div class="logo-container">
-        <img class="header-title" src="Images/Real_logo.png" alt="SACE Portal Logo">
-        <span class="header-title">SACE Portal</span>
-    </div>
-    <div class="nav-container">
-        <span class="menu-toggle" onclick="toggleMenu()">☰</span>
-        <nav class="main-nav">
-            <a href="Mainpage.php">Home</a>
-            <a href="assignment.php">Grading</a>
-            <a href="Profile.php">Students</a>
-            <a href="#">Contact</a>
-            <a href="#">Help</a>
-        </nav>
-        <div class="search-container">
-            <input type="search" placeholder="Search">
-            <form action="logout.php" method="post">
-                <button type="submit" class="logout-button">Logout</button>
-            </form>
-        </div>
-    </div>
-</header>
+<?php include 'navbar.php'; ?>
 
 <main>
     <h1>Students Enrolled</h1>
-   <!--<div class="generate-reports-container">
-        <a href="generate_all_reports.php?CourseID=<?php echo $CourseID; ?>" class="btn btn-primary">Download All Student Reports</a>
-    </div>-->
+
+    <!-- Search Form (Visible only to Teachers and Admins) -->
+    <?php if ($role == 'Teacher' || $role == 'Admin'): ?>
+    <form method="GET" action="">
+        <label class="Search_name" for="search_query">Search by Name or Course:</label>
+        <input type="text" id="search_name" name="search_query" value="<?php echo htmlspecialchars($searchQuery); ?>" placeholder="Enter student name or course">
+        <button type="submit" class="btn-primary_search">Search</button>
+    </form>
+    <?php endif; ?>
+
+    <!-- Student Table -->
     <table>
         <thead>
             <tr>
                 <th>Names</th>
-                <th>Roles</th>
+                <th>Course</th>
                 <th>Profiles</th>
             </tr>
         </thead>
         <tbody>
             <?php while ($row = $result->fetch_assoc()): ?>
                 <tr>
-                    <td><?php echo htmlspecialchars($row['Username']); ?></td>
-                    <td><?php echo htmlspecialchars($row['Role']); ?></td>
+                    <!-- Display the Name of the student -->
+                    <td><?php echo htmlspecialchars($row['Name'] ?? 'Unnamed User'); ?></td>
+                    <td><?php echo htmlspecialchars($row['Course']); ?></td>
                     <td><a href="StudentProfile.php?UserID=<?php echo $row['UserID']; ?>">View</a></td>
                 </tr>
             <?php endwhile; ?>
         </tbody>
     </table>
 
-    <?php if ($role == 'Teacher'): ?>
+    <?php if ($role == 'Teacher' || $role == 'Admin'): ?>
         <div class="group-management">
             <h2>Manage Student Groups</h2>
             <div class="group-input-container">
@@ -150,36 +159,7 @@ if (!$result) {
     <?php endif; ?>
 </main>
 
-<footer class="main-footer">
-    <div class="footer-content">
-        <div class="quick-links">
-            <h3>Quick Links</h3>
-            <ul>
-                <li><a href="#">Home</a></li>
-                <li><a href="#">Services</a></li>
-                <li><a href="#">Student Info</a></li>
-                <li><a href="#">Contacts</a></li>
-                <li><a href="#">Help</a></li>
-            </ul>
-        </div>
-        <div class="contact-us">
-            <h3>Contact Us</h3>
-            <ul>
-                <li><a href="#">Instagram</a></li>
-                <li><a href="#">Facebook</a></li>
-                <li><a href="#">YouTube</a></li>
-            </ul>
-        </div>
-        <div class="address">
-            <h3>Address</h3>
-            <p>Level 5/118 King William St<br>Adelaide, SA<br>Phone: (08) 5555 5555</p>
-        </div>
-    </div>
-    <div class="footer-bottom">
-        <img src="Images/REAL_SACE.png" alt="SACE Portal Logo">
-        <p>&copy; SACE Student Portal</p>
-    </div>
-</footer>
+<?php include 'footer.php'; ?>
 
 <script>
     function toggleMenu() {

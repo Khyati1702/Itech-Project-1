@@ -1,13 +1,21 @@
 <?php
-
 session_start();
 require 'configure.php';
+require 'vendor/autoload.php'; // This autoloads the required libraries
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+// The rest of your existing code continues here...
+
+
+// Redirect if the user is not logged in
 if (!isset($_SESSION['Username'])) {
     header('Location: LoginPage.php');
     exit();
 }
 
+// Redirect if UserID is not provided in the URL
 if (!isset($_GET['UserID'])) {
     header('Location: Profile.php');
     exit();
@@ -17,50 +25,78 @@ $UserID = $_GET['UserID'];
 $loggedInUserRole = $_SESSION['Role'];
 
 // Fetch student information
-$query = $config->prepare("SELECT Name, Course, Role FROM users WHERE UserID = ?");
+$query = $config->prepare("SELECT Name, Course, Role, GoogleEmail FROM users WHERE UserID = ?");
 $query->bind_param("i", $UserID);
 $query->execute();
 $result = $query->get_result();
 $student = $result->fetch_assoc();
 $studentRole = $student['Role'];
+$studentName = $student['Name'];
+$studentEmail = $student['GoogleEmail'];
 
-// Determine the assessments to display based on the student's role
-$assessments = ($studentRole == 'Stage1Students') ? [
+// Define Stage 1 and Stage 2 assessments separately
+$stage1Assessments = [
     "Interaction", "Text_Analysis", "Text_Production", 
     "Investigation_Task_Part_A", "Investigation_Task_Part_B"
-] : [
+];
+
+$stage2Assessments = [
     "Interaction", "Text_Analysis", "Text_Production", 
     "Oral_Presentation", "Response_Japanese", "Response_English"
 ];
 
-// Fetch grades, comments, and teacher notes from gradings table
+// Determine which assessments to show based on the student's role
+$assessments = ($studentRole == 'Stage1Students') ? $stage1Assessments : $stage2Assessments;
+
+// Fetch current grades from the `gradings` table for the student
 $gradesQuery = $config->prepare("
-    SELECT * FROM gradings 
-    WHERE StudentID = ?");
+    SELECT * 
+    FROM gradings 
+    WHERE StudentID = ? 
+    ORDER BY GradingTimestamp DESC 
+    LIMIT 1;");
 $gradesQuery->bind_param("i", $UserID);
 $gradesQuery->execute();
 $gradesResult = $gradesQuery->get_result();
 $grades = $gradesResult->fetch_assoc();
 
-// Fetch exam scores and comments from exam_scores table
-$examScoresQuery = $config->prepare("
-    SELECT * FROM exam_scores 
-    WHERE StudentID = ?");
-$examScoresQuery->bind_param("i", $UserID);
-$examScoresQuery->execute();
-$examScoresResult = $examScoresQuery->get_result();
+// Fetch archived grades for Stage 2 students who were previously in Stage 1 from `stage1_grades_archive`
+$archivedGrades = null;
+if ($studentRole == 'Stage2Students') {
+    $archivedQuery = $config->prepare("
+        SELECT * 
+        FROM stage1_grades_archive 
+        WHERE StudentID = ? 
+        AND Stage = 'Old_stage1Student'
+        ORDER BY GradingTimestamp DESC 
+        LIMIT 1;");
+    $archivedQuery->bind_param("i", $UserID);
+    $archivedQuery->execute();
+    $archivedResult = $archivedQuery->get_result();
+    $archivedGrades = $archivedResult->fetch_assoc();
+}
 
-// Handle grade update for assessments
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_grade']) && $loggedInUserRole == 'Teacher') {
+// Handle grade updates
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_grade']) && ($loggedInUserRole == 'Teacher' || $loggedInUserRole == 'Admin')) {
     $assessment = $_POST['assessment'];
     $newGrade = $_POST['new_grade'];
     $newComment = $_POST['new_comment'];
 
+    // Ensure that existing grades are retained and only updated fields are changed
     $updateQuery = $config->prepare("
         UPDATE gradings 
-        SET $assessment = ?, Comments_$assessment = ?, GradingTimestamp = NOW()
+        SET $assessment = IFNULL(?, $assessment), 
+            Comments_$assessment = IFNULL(?, Comments_$assessment), 
+            GradingTimestamp = NOW()
         WHERE StudentID = ? AND TeacherID = ?");
-    $updateQuery->bind_param("dsii", $newGrade, $newComment, $UserID, $_SESSION['UserID']);
+
+    // Bind new values
+    $updateQuery->bind_param("ssii", 
+        $newGrade, 
+        $newComment, 
+        $UserID,
+        $_SESSION['UserID'] // To identify the teacher making the update
+    );
 
     if ($updateQuery->execute()) {
         echo "<p>Grade updated successfully.</p>";
@@ -68,33 +104,63 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_grade']) && $lo
         echo "<p>Failed to update grade.</p>";
     }
 
-    // Refresh to show updated data
     header("Location: student_performance.php?UserID=" . $UserID);
     exit();
 }
 
-// Handle exam score update
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_exam']) && $loggedInUserRole == 'Teacher') {
-    $examID = $_POST['exam_id'];
-    $examType = $_POST['exam_type'];
-    $newScore = $_POST['new_score'];
-    $newComment = $_POST['new_comment'];
+// Handle email sharing functionality
+if (isset($_POST['share_report'])) {
+    require 'vendor/autoload.php';
 
-    $updateExamQuery = $config->prepare("
-        UPDATE exam_scores 
-        SET $examType = ?, Comments_$examType = ?, ScoreTimestamp = NOW()
-        WHERE ExamID = ? AND StudentID = ? AND TeacherID = ?");
-    $updateExamQuery->bind_param("dsiii", $newScore, $newComment, $examID, $UserID, $_SESSION['UserID']);
+    $mail = new PHPMailer(true);
 
-    if ($updateExamQuery->execute()) {
-        echo "<p>Exam score updated successfully.</p>";
-    } else {
-        echo "<p>Failed to update exam score.</p>";
+    try {
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.your-email-server.com'; // Set your SMTP server
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'your-email@example.com';     // SMTP username
+        $mail->Password   = 'your-email-password';        // SMTP password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+
+        // Recipients
+        $mail->setFrom('your-email@example.com', 'Your School Name');
+        $mail->addAddress($studentEmail, $studentName); // Add student email
+
+        // Determine which report to attach
+        $selectedReport = $_POST['report_type'];
+
+        switch ($selectedReport) {
+            case 'pdf':
+                $reportFilePath = 'path_to_generated_report.pdf'; // Path to PDF report
+                break;
+            case 'word':
+                $reportFilePath = 'path_to_generated_report.docx'; // Path to Word report
+                break;
+            case 'final_pdf':
+                $reportFilePath = 'path_to_final_report.pdf'; // Path to Final PDF report
+                break;
+            case 'final_word':
+                $reportFilePath = 'path_to_final_report.docx'; // Path to Final Word report
+                break;
+            default:
+                echo "Invalid report type selected.";
+                exit();
+        }
+
+        $mail->addAttachment($reportFilePath);
+
+        // Email content
+        $mail->isHTML(true);
+        $mail->Subject = 'Your Performance Report';
+        $mail->Body    = 'Dear ' . $studentName . ',<br><br>Please find attached your performance report.<br><br>Best regards,<br>Your Teacher';
+
+        $mail->send();
+        echo 'Report shared successfully via email!';
+    } catch (Exception $e) {
+        echo "Report could not be sent. Mailer Error: {$mail->ErrorInfo}";
     }
-
-    // Refresh to show updated data
-    header("Location: student_performance.php?UserID=" . $UserID);
-    exit();
 }
 ?>
 
@@ -106,175 +172,201 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_exam']) && $log
     <title>Student Performance</title>
     <link rel="stylesheet" href="colors.css">
     <link rel="stylesheet" href="student_performance.css">
+    <style>
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-    <header class="main-header">
-        <div class="logo-container">
-            <img class="header-title" src="Images/Real_logo.png" alt="SACE Portal Logo">
-            <span class="header-title">SACE Portal</span>
-        </div>
-        <div class="nav-container">
-            <span class="menu-toggle" onclick="toggleMenu()">☰</span>
-            <nav class="main-nav">
-                <a href="Mainpage.php">Home</a>
-                <a href="assignment.php">Grading</a>
-                <a href="Profile.php">Students</a>
-                <a href="#">Contact</a>
-                <a href="#">Help</a>
-            </nav>
-            <div class="search-container">
-                <input type="search" placeholder="Search">
-                <form action="logout.php" method="post">
-                    <button type="submit" class="logout-button">Logout</button>
-                </form>
-            </div>
-        </div>
-    </header>
+<?php include 'navbar.php'; ?>
 
-    <main>
-        <h1>Student Performance</h1>
-        <h2><?php echo htmlspecialchars($student['Name']); ?> - <?php echo htmlspecialchars($student['Course']); ?></h2>
+<main>
+    <h2><?php echo htmlspecialchars($student['Name'] ?? 'N/A'); ?> - <?php echo htmlspecialchars($student['Course'] ?? 'N/A'); ?></h2>
+    
+    <?php if ($loggedInUserRole == 'Teacher' || $loggedInUserRole == 'Admin'): ?>
+    <!-- Button sections grouped in flex layout -->
+    <section style="display: flex; gap: 20px;">
+        <!-- Download PDF Report Button -->
+        <a href="generate_report.php?UserID=<?php echo $UserID; ?>" class="btn btn-primary">Download PDF Report</a>
         
-        <!-- Download PDF and Word Report Buttons, only visible to Teachers -->
-        <?php if ($loggedInUserRole == 'Teacher'): ?>
-        <section>
-            <a href="generate_report.php?UserID=<?php echo $UserID; ?>" class="btn btn-primary">Download PDF Report</a>
-            <a href="generate_word_report.php?UserID=<?php echo $UserID; ?>" class="btn btn-primary">Download Word Report</a>
-        </section>
+        <?php if ($studentRole == 'Stage2Students'): ?>
+            <!-- Download Final PDF Report Button (displayed inline) -->
+            <a href="generate_stage2_pdf_report.php?UserID=<?php echo $UserID; ?>" class="btn btn-primary">Download Final PDF Report</a>
         <?php endif; ?>
+        
+        <!-- Share Report via Email Form -->
+        <form method="POST">
+            <label for="report_type">Select report type to share:</label>
+            <select name="report_type" id="report_type" required>
+                <option value="pdf">PDF Report</option>
+                <option value="word">Word Report</option>
+                <option value="final_pdf">Final PDF Report</option>
+                <option value="final_word">Final Word Report</option>
+            </select>
+            <button type="submit" name="share_report" class="btn btn-primary">Share Report via Email</button>
+        </form>
+    </section>
 
-        <!-- Assessment Grades Table -->
-        <section>
-            <h3>Grades and Comments</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Assessment</th>
-                        <th>Grade</th>
-                        <th>Comment</th>
-                        <th>Timestamp</th>
-                        <?php if ($loggedInUserRole == 'Teacher'): ?>
-                        <th>Update Grade</th>
-                        <?php endif; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($assessments as $assessment): ?>
-                        <?php if (!empty($grades[$assessment]) || !empty($grades['Comments_' . $assessment])): ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars(str_replace('_', ' ', $assessment)); ?></td>
-                                <td><?php echo htmlspecialchars($grades[$assessment]); ?></td>
-                                <td><?php echo htmlspecialchars($grades['Comments_' . $assessment]); ?></td>
-                                <td><?php echo htmlspecialchars($grades['GradingTimestamp']); ?></td>
-                                <?php if ($loggedInUserRole == 'Teacher'): ?>
-                                <td>
-                                    <form method="POST" class="update-grade-form">
-                                        <input type="hidden" name="assessment" value="<?php echo $assessment; ?>">
-                                        <input type="number" name="new_grade" value="<?php echo $grades[$assessment]; ?>" required>
-                                        <input type="text" name="new_comment" value="<?php echo $grades['Comments_' . $assessment]; ?>">
-                                        <button type="submit" name="update_grade">Update</button>
-                                    </form>
-                                </td>
-                                <?php endif; ?>
-                            </tr>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </section>
-
-        <!-- Exam Scores Table -->
-        <section>
-            <h3>Exam Scores</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Exam</th>
-                        <th>Score</th>
-                        <th>Comment</th>
-                        <th>Timestamp</th>
-                        <?php if ($loggedInUserRole == 'Teacher'): ?>
-                            <th>Update Score</th>
-                        <?php endif; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while ($exam = $examScoresResult->fetch_assoc()): ?>
-                        <?php foreach (['Exam1', 'Exam2'] as $examType): ?>
-                            <?php if (!empty($exam[$examType])): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($examType); ?></td>
-                                    <td><?php echo htmlspecialchars($exam[$examType]); ?></td>
-                                    <td><?php echo htmlspecialchars($exam['Comments_' . $examType]); ?></td>
-                                    <td><?php echo htmlspecialchars($exam['ScoreTimestamp']); ?></td>
-                                    <?php if ($loggedInUserRole == 'Teacher'): ?>
-                                        <td>
-                                            <form method="POST" class="update-grade-form"> <!-- same class for consistent styling -->
-                                                <input type="hidden" name="exam_id" value="<?php echo $exam['ExamID']; ?>">
-                                                <input type="hidden" name="exam_type" value="<?php echo $examType; ?>">
-                                                <input type="number" name="new_score" value="<?php echo $exam[$examType]; ?>" required>
-                                                <input type="text" name="new_comment" value="<?php echo $exam['Comments_' . $examType]; ?>">
-                                                <button type="submit" name="update_exam">Update</button>
-                                            </form>
-                                        </td>
-                                    <?php endif; ?>
-                                </tr>
+    <section style="display: flex; gap: 20px; margin-top: 20px;">
+        <!-- Download Word Report Button -->
+        <a href="generate_word_report.php?UserID=<?php echo $UserID; ?>" class="btn btn-primary">Download Word Report</a>
+        
+        <?php if ($studentRole == 'Stage2Students'): ?>
+            <!-- Download Final Word Report Button (displayed inline) -->
+            <a href="generate_Final_Word_report.php?UserID=<?php echo $UserID; ?>" class="btn btn-primary">Download Final Word Report</a>
+        <?php endif; ?>
+    </section>
+    <?php endif; ?>
+    
+    <!-- Assessment Grades Table -->
+    <section>
+        <h3>Grades and Comments</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Assessment</th>
+                    <th>Grade</th>
+                    <th>Comment</th>
+                    <?php if ($loggedInUserRole == 'Teacher' || $loggedInUserRole == 'Admin'): ?>
+                    <th>Timestamp</th> <!-- Only visible for teachers and admin -->
+                    <th>Update Grade and Comments</th>
+                    <?php endif; ?>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($assessments as $assessment): ?>
+                    <?php if (isset($grades[$assessment]) || isset($grades['Comments_' . $assessment])): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars(str_replace('_', ' ', $assessment)); ?></td>
+                            <td><?php echo htmlspecialchars($grades[$assessment] ?? 'N/A'); ?></td>
+                            <!-- Comment button that opens the modal -->
+                            <td>
+                                <button class="btn_comment_asses" onclick="openModal('<?php echo htmlspecialchars($grades['Comments_' . $assessment] ?? 'N/A'); ?>')">View Comment</button>
+                            </td>
+                            <?php if ($loggedInUserRole == 'Teacher' || $loggedInUserRole == 'Admin'): ?>
+                            <td><?php echo htmlspecialchars($grades['GradingTimestamp'] ?? 'N/A'); ?></td>
+                            <td>
+                                <form method="POST" class="update-grade-form">
+                                    <input type="hidden" name="assessment" value="<?php echo $assessment; ?>">
+                                    <input type="number" name="new_grade" value="<?php echo $grades[$assessment] ?? ''; ?>" required>
+                                    <input type="text" name="new_comment" value="<?php echo $grades['Comments_' . $assessment] ?? ''; ?>">
+                                    <button type="submit" name="update_grade">Update</button>
+                                </form>
+                            </td>
                             <?php endif; ?>
-                        <?php endforeach; ?>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
+                        </tr>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Modal for displaying comment -->
+    <div id="commentModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Comment</h3>
+            <div class="modal-body" id="modalCommentContent"></div>
+        </div>
+    </div>
+
+    <!-- Show Stage 1 Archived Grades for Stage 2 Students -->
+    <?php if ($studentRole == 'Stage2Students' && $archivedGrades): ?>
+    <section>
+        <h3>Stage 1 Grades</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Assessment</th>
+                    <th>Grade</th>
+                    <th>Comments</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($stage1Assessments as $assessment): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars(str_replace('_', ' ', $assessment)); ?></td>
+                        <td><?php echo htmlspecialchars($archivedGrades[$assessment] ?? 'N/A'); ?></td>
+                        <td><?php echo htmlspecialchars($archivedGrades['Comments_' . $assessment] ?? 'N/A'); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </section>
+    <?php endif; ?>
+
+    <!-- Teacher Notes Section -->
+    <?php if ($loggedInUserRole == 'Teacher' || $loggedInUserRole == 'Admin'): ?>
+        <section class="teacher-notes-section">
+            <div class="teacher-notes-header">
+                Teacher Notes
+            </div>
+            <div class="teacher-notes-content">
+                <!-- Check if TeacherNote exists and display -->
+                <p><?php echo htmlspecialchars($grades['TeacherNote'] ?? 'No teacher notes available'); ?></p>
+            </div>
         </section>
+    <?php endif; ?>
+</main>
 
-        <?php if ($loggedInUserRole == 'Teacher'): ?>
-            <section class="teacher-notes-section">
-                <div class="teacher-notes-header">
-                    Teacher Notes
-                </div>
-                <div class="teacher-notes-content">
-                    <p><?php echo htmlspecialchars($grades['TeacherNote']); ?></p>
-                </div>
-            </section>
-        <?php endif; ?>
-    </main>
+<?php include 'footer.php'; ?>
 
-    <footer class="main-footer">
-        <div class="footer-content">
-            <div class="quick-links">
-                <h3>Quick Links</h3>
-                <ul>
-                    <li><a href="#">Home</a></li>
-                    <li><a href="#">Services</a></li>
-                    <li><a href="#">Student Info</a></li>
-                    <li><a href="#">Contacts</a></li>
-                    <li><a href="#">Help</a></li>
-                </ul>
-            </div>
-            <div class="contact-us">
-                <h3>Contact Us</h3>
-                <ul>
-                    <li><a href="#">Instagram</a></li>
-                    <li><a href="#">Facebook</a></li>
-                    <li><a href="#">YouTube</a></li>
-                </ul>
-            </div>
-            <div class="address">
-                <h3>Address</h3>
-                <p>Level 5/118 King William St<br>Adelaide, SA<br>Phone: (08) 5555 5555</p>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <img src="Images/REAL_SACE.png" alt="SACE Portal Logo">
-            <p>&copy; SACE Student Portal</p>
-        </div>
-    </footer>
+<script>
+    function openModal(comment) {
+        const modal = document.getElementById('commentModal');
+        const modalContent = document.getElementById('modalCommentContent');
+        modalContent.textContent = comment;
+        modal.style.display = 'block';
+    }
 
-    <script>
-        function toggleMenu() {
-            const nav = document.querySelector('.main-nav');
-            nav.classList.toggle('active');
-            console.log('Menu toggled.');
+    const closeBtn = document.querySelector('.modal .close');
+    closeBtn.onclick = function () {
+        document.getElementById('commentModal').style.display = 'none';
+    };
+
+    window.onclick = function (event) {
+        if (event.target == document.getElementById('commentModal')) {
+            document.getElementById('commentModal').style.display = 'none';
         }
-    </script>
+    };
+</script>
 </body>
 </html>

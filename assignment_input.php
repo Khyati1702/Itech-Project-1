@@ -7,8 +7,8 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Check if the user is logged in and is a teacher
-if (!isset($_SESSION['Username']) || $_SESSION['Role'] != 'Teacher') {
+// Check if the user is logged in and is a Teacher or Admin
+if (!isset($_SESSION['Username']) || ($_SESSION['Role'] != 'Teacher' && $_SESSION['Role'] != 'Admin')) {
     header('Location: LoginPage.php');
     exit();
 }
@@ -16,6 +16,7 @@ if (!isset($_SESSION['Username']) || $_SESSION['Role'] != 'Teacher') {
 // Get URL parameters
 $student_id = isset($_GET['student_id']) ? $_GET['student_id'] : null;
 $stage = isset($_GET['stage']) ? $_GET['stage'] : null;
+$assessment_name = isset($_GET['assessment_name']) ? $_GET['assessment_name'] : null;
 $view = isset($_GET['view']) ? $_GET['view'] : null;
 
 // Ensure TeacherID is available
@@ -40,101 +41,97 @@ if ($stage == 1) {
     die('Invalid stage provided.');
 }
 
-// Handle form submission for inputting grades and comments
+// Fetch students based on the stage
+$students_query = $config->prepare("SELECT UserID, Name FROM users WHERE Role = ?");
+$role = 'Stage' . $stage . 'Students';
+$students_query->bind_param("s", $role);
+$students_query->execute();
+$students = $students_query->get_result();
+
+if (!$students) {
+    die('No students found for this stage.');
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($view == 'student' && $student_id) {
-        // Handle saving for student view (already working)
-        // Fetch current grades and comments to avoid overwriting existing data
-        $existing_grades_query = $config->prepare("SELECT * FROM gradings WHERE StudentID = ? AND TeacherID = ?");
-        $existing_grades_query->bind_param("ii", $student_id, $teacher_id);
-        $existing_grades_query->execute();
-        $existing_grades = $existing_grades_query->get_result()->fetch_assoc();
-
+        // Base query to insert grades
         $query_base = "INSERT INTO gradings (StudentID, TeacherID, GradingTimestamp";
         $query_values = " VALUES (?, ?, NOW()";
         $query_update = " ON DUPLICATE KEY UPDATE GradingTimestamp = NOW()";
         $params = [$student_id, $teacher_id];
-        $types = "ii";
+        $types = "ii"; // 'i' for integers (StudentID, TeacherID)
 
+        // Loop through each assessment and process the input
         foreach ($assessments as $assessment) {
             $grade = isset($_POST[str_replace(' ', '_', $assessment)]) ? $_POST[str_replace(' ', '_', $assessment)] : null;
             $comment = isset($_POST[str_replace(' ', '_', $assessment) . '_comment']) ? $_POST[str_replace(' ', '_', $assessment) . '_comment'] : null;
 
-            // Preserve existing grades and comments if no new input is provided
-            if ($grade === null || $grade === '') {
-                $grade = $existing_grades[$assessment] ?? null;
-            }
-            if ($comment === null || $comment === '') {
-                $comment = $existing_grades['Comments_' . $assessment] ?? null;
+            // Only process if the grade or comment is provided
+            if ($grade !== null && $grade !== '') { // Ensure we don't insert empty values
+                $query_base .= ", `$assessment`";
+                $query_values .= ", ?";
+                $query_update .= ", `$assessment` = VALUES(`$assessment`)";
+                $params[] = $grade;
+                $types .= "d"; // 'd' for decimal (grade)
             }
 
-            if ($grade !== null || $comment !== null) {
-                $query_base .= ", `$assessment`, `Comments_$assessment`";
-                $query_values .= ", ?, ?";
-                $query_update .= ", `$assessment` = VALUES(`$assessment`), `Comments_$assessment` = VALUES(`Comments_$assessment`)";
-                $params[] = $grade;
+            if ($comment !== null && $comment !== '') {
+                $query_base .= ", `Comments_$assessment`";
+                $query_values .= ", ?";
+                $query_update .= ", `Comments_$assessment` = VALUES(`Comments_$assessment`)";
                 $params[] = $comment;
-                $types .= "ds"; // d for decimal (grade), s for string (comment)
+                $types .= "s"; // 's' for string (comment)
             }
         }
 
-        // Include Teacher Notes if provided
+        // Add Teacher Notes if provided
         if (!empty($_POST['teacher_notes'])) {
             $query_base .= ", `TeacherNote`";
             $query_values .= ", ?";
             $query_update .= ", `TeacherNote` = VALUES(`TeacherNote`)";
             $params[] = $_POST['teacher_notes'];
-            $types .= "s"; // s for string (teacher note)
+            $types .= "s"; // 's' for string (teacher note)
         }
 
+        // Combine the base query, values, and update clause
         $query = $query_base . ")" . $query_values . ")" . $query_update;
-        $stmt = $config->prepare($query);
 
+        // Prepare and execute the statement
+        $stmt = $config->prepare($query);
         if (!$stmt) {
             die("Query preparation failed: " . $config->error);
         }
 
+        // Bind the parameters and execute the query
         $stmt->bind_param($types, ...$params);
         if ($stmt->execute()) {
             echo "Grades and comments saved successfully!";
         } else {
             echo "Error saving grades and comments: " . $stmt->error;
         }
-    } elseif ($view == 'assessment' && $stage) {
-        // Handle saving for assessment view
+
+    } elseif ($view == 'assessment' && $assessment_name) {
+        // Handle saving for assessment view (all students for one assessment)
         foreach ($_POST as $student_id => $data) {
             if (is_numeric($student_id)) {
-                foreach ($data as $assessment_name => $values) {
-                    $grade = $values['grade'] ?? null;
-                    $comment = $values['comment'] ?? null;
-                    
-                    // Preserve existing data if no new input is provided
-                    $existing_grades_query = $config->prepare("SELECT * FROM gradings WHERE StudentID = ? AND TeacherID = ?");
-                    $existing_grades_query->bind_param("ii", $student_id, $teacher_id);
-                    $existing_grades_query->execute();
-                    $existing_grades = $existing_grades_query->get_result()->fetch_assoc();
+                $grade = $data['grade'] ?? null;
+                $comment = $data['comment'] ?? null;
 
-                    if ($grade === null || $grade === '') {
-                        $grade = $existing_grades[$assessment_name] ?? null;
-                    }
-                    if ($comment === null || $comment === '') {
-                        $comment = $existing_grades['Comments_' . $assessment_name] ?? null;
-                    }
+                // Ensure that empty values are not sent to the database
+                if ($grade === '') $grade = null;
+                if ($comment === '') $comment = null;
 
-                    if ($grade !== null || $comment !== null) {
-                        $update_query = $config->prepare("
-                            INSERT INTO gradings (StudentID, TeacherID, `$assessment_name`, `Comments_$assessment_name`, GradingTimestamp) 
-                            VALUES (?, ?, ?, ?, NOW())
-                            ON DUPLICATE KEY UPDATE 
-                                `$assessment_name` = VALUES(`$assessment_name`), 
-                                `Comments_$assessment_name` = VALUES(`Comments_$assessment_name`), 
-                                GradingTimestamp = NOW()");
-                        if (!$update_query) {
-                            die("Update query preparation failed: " . $config->error);
-                        }
-                        $update_query->bind_param('iiss', $student_id, $teacher_id, $grade, $comment);
-                        $update_query->execute();
-                    }
+                // Insert or update the grade and comment
+                if ($grade !== null || $comment !== null) { // Only process if grade or comment is provided
+                    $update_query = $config->prepare("
+                        INSERT INTO gradings (StudentID, TeacherID, `$assessment_name`, `Comments_$assessment_name`, GradingTimestamp) 
+                        VALUES (?, ?, ?, ?, NOW())
+                        ON DUPLICATE KEY UPDATE 
+                            `$assessment_name` = VALUES(`$assessment_name`), 
+                            `Comments_$assessment_name` = VALUES(`Comments_$assessment_name`), 
+                            GradingTimestamp = NOW()");
+                    $update_query->bind_param('iiss', $student_id, $teacher_id, $grade, $comment);
+                    $update_query->execute();
                 }
             }
         }
@@ -161,29 +158,7 @@ if ($view == 'student' && $student_id) {
     <link rel="stylesheet" href="assignment_input.css">
 </head>
 <body>
-<header class="main-header">
-    <div class="logo-container">
-        <img class="header-title" src="Images/Real_logo.png" alt="SACE Portal Logo">
-        <span class="header-title">SACE Portal</span>
-    </div>
-    <div class="nav-container">
-        <span class="menu-toggle" onclick="toggleMenu()">☰</span>
-        <nav class="main-nav">
-            <a href="Mainpage.php">Home</a>
-            <a href="assignment.php">Grading</a>
-            <a href="Profile.php">Students</a>
-            <a href="#">Contact</a>
-            <a href="#">Help</a>
-        </nav>
-        <div class="search-container">
-            <input type="search" placeholder="Search">
-            <form action="logout.php" method="post">
-                <button type="submit" class="logout-button">Logout</button>
-            </form>
-        </div>
-    </div>
-</header>
-
+<?php include 'navbar.php'; ?>
 <script>
     function toggleMenu() {
         const nav = document.querySelector('.main-nav');
@@ -192,91 +167,61 @@ if ($view == 'student' && $student_id) {
     }
 </script>
 
-    <main>
-        <?php if ($view == 'student' && $student_id): ?>
-            <h1>Input Grades for <?php echo htmlspecialchars($student_name); ?></h1>
-            <form method="post">
-                <?php foreach ($assessments as $assessment): ?>
-                    <div>
-                        <label for="<?php echo str_replace(' ', '_', $assessment); ?>"><?php echo htmlspecialchars($assessment); ?></label>
-                        <input type="text" id="<?php echo str_replace(' ', '_', $assessment); ?>" name="<?php echo str_replace(' ', '_', $assessment); ?>" placeholder="Enter Grade">
-                        <label for="<?php echo str_replace(' ', '_', $assessment) . '_comment'; ?>">Comment:</label>
-                        <input type="text" id="<?php echo str_replace(' ', '_', $assessment) . '_comment'; ?>" name="<?php echo str_replace(' ', '_', $assessment) . '_comment'; ?>" placeholder="Enter Comment">
-                    </div>
-                <?php endforeach; ?>
-                <div class="teacher-notes-section">
-                    <div class="teacher-notes-header">
-                        Teacher Notes
-                    </div>
-                    <div class="teacher-notes-content">
-                        <textarea name="teacher_notes" id="teacher_notes" rows="4" placeholder="Enter your notes here..."></textarea>
+<main>
+    <?php if ($view == 'student' && $student_id): ?>
+        <h1>Input Grades for <?php echo htmlspecialchars($student_name); ?></h1>
+        <form method="post">
+            <?php foreach ($assessments as $assessment): ?>
+                <div class="assessment-input">
+                    <label for="<?php echo str_replace(' ', '_', $assessment); ?>" 
+                           class="<?php echo ($stage == 1) ? 'stage1-label' : ''; ?>">
+                        <?php echo str_replace('_', ' ', htmlspecialchars($assessment)); ?>
+                    </label>
+                    <div class="grade-comment">
+                        <input type="number" 
+                               id="<?php echo str_replace(' ', '_', $assessment); ?>" 
+                               name="<?php echo str_replace(' ', '_', $assessment); ?>" 
+                               placeholder="Grade" 
+                               min="1" max="100">
+                        <textarea id="<?php echo str_replace(' ', '_', $assessment) . '_comment'; ?>" 
+                                  name="<?php echo str_replace(' ', '_', $assessment) . '_comment'; ?>" 
+                                  placeholder="Enter Comment"></textarea>
                     </div>
                 </div>
-                <button type="submit">Save Grades</button>
-            </form>
-        <?php elseif ($view == 'assessment' && $stage): ?>
-            <h1>Input Grades for Stage <?php echo htmlspecialchars($stage); ?></h1>
-            <form method="post">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Student</th>
-                            <th>Grade</th>
-                            <th>Comment</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        $students_query = $config->prepare("SELECT UserID, Name FROM users WHERE Role = ?");
-                        $role = 'Stage' . $stage . 'Students';
-                        $students_query->bind_param("s", $role);
-                        $students_query->execute();
-                        $students = $students_query->get_result();
-                        while ($student = $students->fetch_assoc()): ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($student['Name']); ?></td>
-                                <td><input type="text" name="<?php echo $student['UserID']; ?>[<?php echo $assessments[0]; ?>][grade]" placeholder="Enter Grade"></td>
-                                <td><input type="text" name="<?php echo $student['UserID']; ?>[<?php echo $assessments[0]; ?>][comment]" placeholder="Enter Comment"></td>
-                            </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
-                <button type="submit">Save Grades</button>
-            </form>
-        <?php else: ?>
-            <p>No valid view selected. Please select a valid student or assessment to view.</p>
-        <?php endif; ?>
-    </main>
+            <?php endforeach; ?>
+            <div class="teacher-notes-section">
+                <div class="teacher-notes-header">
+                    Teacher Notes
+                </div>
+                <div class="teacher-notes-content">
+                    <textarea name="teacher_notes" id="teacher_notes" rows="4" placeholder="Enter your notes here..."></textarea>
+                </div>
+            </div>
+            <button type="submit" class="SaveGrade-button">Save Grades</button>
+        </form>
+        <?php elseif ($view == 'assessment' && $assessment_name): ?>
+    <h1>Input Grades for <?php echo str_replace('_', ' ', htmlspecialchars($assessment_name)); ?></h1>
+    <form method="post">
+        <div class="assessment-view">
+            <?php while ($student = $students->fetch_assoc()): ?>
+                <div class="student-assessment">
+                    <div class="student-name">
+                        <?php echo htmlspecialchars($student['Name']); ?>
+                    </div>
+                    <div class="grade-comment">
+                        <input type="number" name="<?php echo $student['UserID']; ?>[grade]" placeholder="Grade">
+                        <textarea name="<?php echo $student['UserID']; ?>[comment]" placeholder="Enter Comment"></textarea>
+                    </div>
+                </div>
+            <?php endwhile; ?>
+        </div>
+        <button type="submit" class="SaveGrade-button">Save Grades</button>
+    </form>
+<?php endif; ?>
 
-    <footer class="main-footer">
-    <div class="footer-content">
-        <div class="quick-links">
-            <h3>Quick Links</h3>
-            <ul>
-                <li><a href="#">Home</a></li>
-                <li><a href="#">Services</a></li>
-                <li><a href="#">Student Info</a></li>
-                <li><a href="#">Contacts</a></li>
-                <li><a href="#">Help</a></li>
-            </ul>
-        </div>
-        <div class="contact-us">
-            <h3>Contact Us</h3>
-            <ul>
-                <li><a href="#">Instagram</a></li>
-                <li><a href="#">Facebook</a></li>
-                <li><a href="#">YouTube</a></li>
-            </ul>
-        </div>
-        <div class="address">
-            <h3>Address</h3>
-            <p>Level 5/118 King William St<br>Adelaide, SA<br>Phone: (08) 5555 5555</p>
-        </div>
-    </div>
-    <div class="footer-bottom">
-        <img src="Images/REAL_SACE.png" alt="SACE Portal Logo">
-        <p>&copy; SACE Student Portal</p>
-    </div>
-</footer>
+</main>
+
+<?php include 'footer.php'; ?>
+
 </body>
 </html>
