@@ -20,7 +20,7 @@ if (isset($_POST['delete_assignment'])) {
 
     // Check if FilePath is not empty and exists before attempting to delete the file
     if (!empty($fileData['FilePath']) && file_exists($fileData['FilePath'])) {
-        unlink($fileData['FilePath']); // Delete the file from the server
+        unlink($fileData['FilePath']); 
     }
 
     // Now delete the assignment from the database
@@ -77,9 +77,9 @@ $result = $stmt->get_result();
                 <th>Description</th>
                 <th>Stage</th>
                 <th>File</th>
-                <th>Start and Due Date</th> <!-- Updated single column for dates -->
+                <th>Start and Due Date</th> 
                 <th>Upload Date</th>
-                <th>Actions</th> <!-- Added Actions column -->
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>

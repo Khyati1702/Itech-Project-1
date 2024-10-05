@@ -36,12 +36,12 @@ h1 {
     color: var(--heading-color);
     font-size: 2rem;
     font-weight: bold;
-    background: rgba(255, 255, 255, 0.2); /* Light blue with transparency */
+    background: rgba(255, 255, 255, 0.2); 
     border-radius: 10px;
     padding: 20px;
-    backdrop-filter: blur(10px); /* Apply blur */
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-    border: 1px solid rgba(255, 255, 255, 0.18); /* Light border */
+    backdrop-filter: blur(10px); 
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); 
+    border: 1px solid rgba(255, 255, 255, 0.18); 
     animation: fadeInSlideUp 2s forwards;
 }
 
@@ -54,12 +54,12 @@ h1 {
 
 /* Glassmorphism effect on the form */
 form {
-    background: rgba(255, 255, 255, 0.2); /* White with transparency */
-    backdrop-filter: blur(10px); /* Apply blur effect */
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px); 
     padding: 20px;
-    border: solid 2px rgba(255, 255, 255, 0.18); /* Light border */
+    border: solid 2px rgba(255, 255, 255, 0.18); 
     border-radius: 10px;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); 
     max-width: 800px;
     width: 100%;
     margin: 0 auto;
@@ -71,13 +71,13 @@ input, select, textarea {
     padding: 8px;
     border: solid 1px var(--heading-color);
     border-radius: 5px;
-    background: var(--third-color); /* Transparent input */
+    background: var(--third-color); 
     backdrop-filter: blur(5px);
 }
 
 /* Button Styles with Glassmorphism */
 button {
-    background-color: var(--background-color); /* Transparent button */
+    background-color: var(--background-color); 
     color: var(--third-color);
     padding: 10px 15px;
     border: none;
@@ -88,7 +88,7 @@ button {
 }
 
 button:hover {
-    background-color: var(--third-color); /* Slight hover effect */
+    background-color: var(--third-color); 
     color: var(--background-color);
 }
 
@@ -103,7 +103,7 @@ button:hover {
     color: var(--heading-color);
     font-weight: bold;
     padding: 6px 0px;
-background-color: rgba(111, 175, 220, 0.1); /* Light blue background */
+background-color: rgba(111, 175, 220, 0.1); 
 display: inline-block;
     
 }
@@ -140,21 +140,21 @@ display: inline-block;
     color: var(--heading-color);
     font-weight: bold;
     padding: 6px 0px;
-background-color: rgba(111, 175, 220, 0.1); /* Light blue background */
+background-color: rgba(111, 175, 220, 0.1); 
 display: inline-block;
 }
 
 /* Teacher Notes Textarea Styling */
 .teacher-notes-content textarea {
-    width: 100%; /* Full width */
-    min-height: 100px; /* Minimum height */
+    width: 100%; 
+    min-height: 100px; 
     padding: 10px;
-    border: 1px solid var(--heading-color); /* Matching border */
+    border: 1px solid var(--heading-color); 
     border-radius: 5px;
-    background-color: var(--third-color); /* Light transparent background */
-    resize: vertical; /* Allow only vertical resizing */
-    font-size: 1rem; /* Font size for better readability */
-    color: var(--text-color); /* Text color */
+    background-color: var(--third-color);
+    resize: vertical; 
+    font-size: 1rem; 
+    color: var(--text-color); 
    
 }
 
@@ -166,7 +166,7 @@ display: inline-block;
     color: var(--heading-color);
     font-weight: bold;
     padding: 6px 0px;
-background-color: rgba(111, 175, 220, 0.1); /* Light blue background */
+background-color: rgba(111, 175, 220, 0.1);
 display: inline-block;}
 
 
@@ -178,20 +178,20 @@ display: inline-block;}
     color: var(--third-color);
     cursor: pointer;
 }
-/* Ensure the body is a flex container */
+
 body {
     display: flex;
     flex-direction: column;
-    min-height: 100vh; /* Ensure the body is at least the height of the viewport */
-    margin: 0; /* Remove default margin */
+    min-height: 100vh; 
+    margin: 0; 
 }
 
-/* Make the main section take up all available space */
+
 main {
-    flex-grow: 1; /* This pushes the footer down when content is small */
+    flex-grow: 1; 
     padding: 20px;
     width: 100%;
-    margin: 0 auto; /* Center the main content */
+    margin: 0 auto; 
 }
 
 
@@ -222,11 +222,11 @@ main {
     }
 
     table thead {
-        display: none; /* Hide table headers for mobile */
+        display: none; 
     }
 }
 
-/* Further adjustments for smaller screens */
+
 @media (max-width: 480px) {
     table input[type="number"] {
         width: 100%;

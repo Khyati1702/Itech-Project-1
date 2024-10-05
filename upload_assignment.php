@@ -10,16 +10,16 @@ include 'configure.php';
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $title = $_POST['title'];
     $description = $_POST['description'];
-    $stage = $_POST['stage'];  // Stage 1 or Stage 2
-    $startDate = $_POST['start_date']; // Start Date
-    $dueDate = $_POST['due_date']; // Due Date
+    $stage = $_POST['stage'];  
+    $startDate = $_POST['start_date']; 
+    $dueDate = $_POST['due_date']; 
     $teacherID = $_SESSION['UserID'];
 
     // Handle file upload
     $filePath = null;
-    $uploadDir = 'uploads/assignments/';  // Define the upload directory
+    $uploadDir = 'uploads/assignments/';  
 
-    // Check if directory exists, if not, create it
+  
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0755, true);
     }
@@ -30,12 +30,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $filePath = $uploadDir . basename($fileName);
 
         if (!move_uploaded_file($fileTmpPath, $filePath)) {
-            $filePath = null;  // If upload fails
+            $filePath = null; 
             echo "File upload failed!";
         }
     }
 
-    // Insert the assignment with the Stage info, Start Date, and Due Date
+
     $stmt = $config->prepare("INSERT INTO assignments (TeacherID, Stage, Title, Description, FilePath, StartDate, DueDate) VALUES (?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("issssss", $teacherID, $stage, $title, $description, $filePath, $startDate, $dueDate);
 

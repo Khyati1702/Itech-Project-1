@@ -177,7 +177,7 @@
   /* Responsive container for the table */
 .table-responsive {
     width: 100%;
-    overflow-x: auto; /* Enable horizontal scrolling */
+    overflow-x: auto; 
   }
   
   /* Existing table styles */
@@ -227,7 +227,7 @@
   /* Responsive Design */
   @media (max-width: 768px) {
     .table-responsive {
-      overflow-x: auto; /* Enable scrolling for smaller screens */
+      overflow-x: auto; 
     }
   
     table th, table td {

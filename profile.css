@@ -18,7 +18,7 @@ main {
   padding: 20px;
 }
 
-main h1 {
+main h1, h2 {
   margin-top: 10px;
   color: var(--heading-color);
   opacity: 0;
@@ -137,24 +137,24 @@ table td a:hover {
     font-size: 16px;
     text-align: center;
     text-decoration: none;
-    color: #000; /* Black text color */
-    background-color: #e0f7fc; /* Light blue background */
-    border: 3px solid var(--third-color); /* Slightly darker border */
-    border-radius: 10px; /* Rounded corners */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for a 3D effect */
-    transition: all 0.3s ease; /* Smooth transition for hover effects */
+    color: #000; 
+    background-color: #e0f7fc; 
+    border: 3px solid var(--third-color); 
+    border-radius: 10px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+    transition: all 0.3s ease; 
   }
   
   .group-input-container button:hover {
-    background-color: #c4e6f1; /* Darker blue on hover */
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Enhance shadow on hover */
-    transform: translateY(-2px); /* Slight lift effect */
+    background-color: #c4e6f1; 
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); 
+    transform: translateY(-2px); 
   }
   
   .group-input-container button:active {
-    background-color: #b3d3e3; /* Even darker blue when clicked */
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Pressed down effect */
-    transform: translateY(1px); /* Slight press down effect */
+    background-color: #b3d3e3; 
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); 
+    transform: translateY(1px); 
   }
 
 
@@ -165,24 +165,24 @@ table td a:hover {
   font-size: 16px;
   text-align: center;
   text-decoration: none;
-  color: #000; /* Black text color */
-  background-color: #e0f7fc; /* Light blue background */
-  border: 3px solid var(--third-color); /* Slightly darker border */
-  border-radius: 10px; /* Rounded corners */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for a 3D effect */
-  transition: all 0.3s ease; /* Smooth transition for hover effects */
+  color: #000; 
+  background-color: #e0f7fc;
+  border: 3px solid var(--third-color); 
+  border-radius: 10px; 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+  transition: all 0.3s ease; 
 }
 
 .btn:hover {
-  background-color: #c4e6f1; /* Darker blue on hover */
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Enhance shadow on hover */
-  transform: translateY(-2px); /* Slight lift effect */
+  background-color: #c4e6f1; 
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); 
+  transform: translateY(-2px); 
 }
 
 .btn:active {
-  background-color: #b3d3e3; /* Even darker blue when clicked */
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Pressed down effect */
-  transform: translateY(1px); /* Slight press down effect */
+  background-color: #b3d3e3; 
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); 
+  transform: translateY(1px); 
 }
 /* Add this to shared_files.css */
 
@@ -253,7 +253,7 @@ table td a:hover {
 .shared-table-container a:hover {
   text-decoration: underline;
 }
-h1{color: var(--heading-color);
+h1,h2{color: var(--heading-color);
   margin-bottom: 20px;
   text-align: center;
   font-size: 2rem;
@@ -273,56 +273,110 @@ h1{color: var(--heading-color);
 form {
   display: flex;
   align-items: center;
-  gap: 10px; /* Add space between the input field and the button */
+  gap: 10px; 
 }
 
 /* Search Input Styling */
 #search_name {
-  width: 250px; /* Adjust the width as needed */
+  width: 250px; 
   padding: 10px;
   font-size: 16px;
-  border: 2px solid var(--primary-color); /* Light border for the input field */
-  border-radius: 10px; /* Rounded corners */
+  border: 2px solid var(--primary-color); 
+  border-radius: 10px; 
   background-color: white;
   transition: border-color 0.3s ease;
 }
 
-/* Input focus style */
-#search_name:focus {
-  outline: none;
-  border-color: #007bff; /* Border color change on focus */
-}
-
 /* Button Styling */
 .btn-primary_search {
-  padding: 10px 20px; /* Padding for the button */
-  background-color: #e0f7fc; /* Light blue background */
+  padding: 10px 20px;
+  background-color: #e0f7fc; 
   color: black;
   font-size: 16px;
   border: 2.5px solid var(--third-color);
-  border-radius: 10px; /* Rounded corners */
+  border-radius: 10px; 
   cursor: pointer;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+ 
 }
 
 /* Button hover state */
 .btn-primary_search:hover {
-  background-color: #b3e3f3; /* Slightly darker blue on hover */
-  border-color: #007bff; /* Border color change on hover */
+  background-color: #c4e6f1; 
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); 
+  transform: translateY(-2px); 
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
   form {
       flex-direction: column;
-      gap: 15px; /* More space between input and button on small screens */
+      gap: 15px; 
   }
 
   #search_name,
   .btn-primary {
-      width: 100%; /* Full width for both search bar and button */
+      width: 100%; 
       text-align: center;
   }
 }
 
-  
+/* statistics.css */
+.form-container label {
+  font-weight: bold;
+  color: var(--heading-color);
+}
+
+.form-container select, 
+.form-container input[type="number"] {
+  padding: 10px;
+  border: 2px solid var(--third-color);
+  border-radius: 10px;
+  background-color: #fff;
+  width: 180px;
+
+}
+
+/* Stats results styling */
+.stats-results {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: var(--primary-color);
+  border-radius: 10px;
+  color: var(--background-color);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
+}
+
+.stats-results p {
+  margin: 8px 0;
+  font-weight: bold;
+  color: var(--heading-color);
+  text-shadow: -1px -1px 0 #E0F7FA, 1px -1px 0 #E0F7FA, -1px 1px 0 #E0F7FA, 1px 1px 0 #E0F7FA;
+}
+
+.stats-results h3 {
+  margin-bottom: 15px;
+  font-size: 22px;
+  font-weight: bold;
+  color: var(--heading-color);
+  text-shadow: -1px -1px 0 #E0F7FA, 1px -1px 0 #E0F7FA, -1px 1px 0 #E0F7FA, 1px 1px 0 #E0F7FA;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .form-container {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+
+  .form-container select, 
+  .form-container input[type="number"],
+  .form-container button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .stats-results {
+    padding: 10px;
+  }
+}

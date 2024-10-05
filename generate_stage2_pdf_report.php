@@ -157,16 +157,16 @@ $html = '
        * Res Eng= Response in English (Stage 2)</p>
 ';
 
-// Load the HTML into Dompdf
+
 $dompdf->loadHtml($html);
 
-// Set paper size to A4
+
 $dompdf->setPaper('A4', 'portrait');
 
-// Render the PDF
+
 $dompdf->render();
 
-// Stream the PDF to the browser for download
+
 $dompdf->stream("stage2_student_report.pdf", ["Attachment" => true]);
 
 exit();

@@ -1,23 +1,27 @@
 <?php
 session_start();
 require 'configure.php';
-require_once 'vendor/autoload.php'; // Ensure Google API client is autoloaded
+require_once 'vendor/autoload.php';
+use Dotenv\Dotenv;
 
-// Define the session timeout in seconds (e.g., 1800 seconds = 30 minutes)
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+
 define('SESSION_TIMEOUT', 1800);
 
-// Check if the user is logged in
+
 if (isset($_SESSION['Username'])) {
-    // Check if session timeout has been set
+    
     if (isset($_SESSION['last_activity'])) {
-        // Calculate the session duration
+        
         $session_duration = time() - $_SESSION['last_activity'];
 
         // If the session has timed out, log the user out
         if ($session_duration > SESSION_TIMEOUT) {
-            session_unset(); // Unset session variables
-            session_destroy(); // Destroy the session
-            header('Location: LoginPage.php?timeout=1'); // Redirect to login page with timeout flag
+            session_unset(); 
+            session_destroy(); 
+            header('Location: LoginPage.php?timeout=1'); 
             exit();
         }
     }
@@ -25,19 +29,21 @@ if (isset($_SESSION['Username'])) {
     $_SESSION['last_activity'] = time();
 }
 
-// Google Client configuration
+
+
 $googleClient = new Google_Client();
-$googleClient->setClientId();
-$googleClient->setClientSecret();
-$googleClient->setRedirectUri(); 
+$googleClient->setClientId($_ENV['GOOGLE_CLIENT_ID']);
+$googleClient->setClientSecret($_ENV['GOOGLE_CLIENT_SECRET']);
+$googleClient->setRedirectUri($_ENV['GOOGLE_REDIRECT_URI']);
 $googleClient->addScope("email");
 $googleClient->addScope("profile");
+
 
 // Handle the callback from Google
 if (isset($_GET['code'])) {
     $token = $googleClient->fetchAccessTokenWithAuthCode($_GET['code']);
     
-    // Check if there are any errors in fetching the access token
+   
     if (isset($token['error'])) {
         echo 'Error fetching token: ' . $token['error'];
         exit();
@@ -64,11 +70,11 @@ if (isset($_GET['code'])) {
         
         // If username is missing, let's generate one and update it
         if (empty($user['Username'])) {
-            $username = strtolower(str_replace(' ', '', $name)); // Generate username from the Google name
+            $username = strtolower(str_replace(' ', '', $name)); 
             $updateUsername = $config->prepare("UPDATE users SET Username = ? WHERE UserID = ?");
             $updateUsername->bind_param("si", $username, $user['UserID']);
             $updateUsername->execute();
-            $user['Username'] = $username; // Set this for session use
+            $user['Username'] = $username; 
         }
 
         $_SESSION['Username'] = $user['Username'];
@@ -81,7 +87,7 @@ if (isset($_GET['code'])) {
             $updateCourseID = $config->prepare("UPDATE users SET CourseID = 1 WHERE UserID = ?");
             $updateCourseID->bind_param("i", $user['UserID']);
             $updateCourseID->execute();
-            $_SESSION['CourseID'] = 1; // Set it in the session as well
+            $_SESSION['CourseID'] = 1; 
         }
 
         // Redirect based on role
@@ -90,19 +96,19 @@ if (isset($_GET['code'])) {
         } elseif ($user['Role'] == 'Teacher') {
             header('Location: Mainpage.php');
         } else {
-            header('Location: Mainpage.php'); // For students as well
+            header('Location: Mainpage.php'); 
         }
         exit();
     } else {
-        // If user doesn't exist, insert them into the database as a new user with default CourseID of 1 and Course as 'Stage 1'
-        $role = 'Stage1Students'; // Default role is Stage1Students for new Google users
-        $course = 'Stage 1'; // Set default course
-        $username = strtolower(str_replace(' ', '', $name)); // Generate a username from the Google name
+       
+        $role = 'Stage1Students'; 
+        $course = 'Stage 1'; 
+        $username = strtolower(str_replace(' ', '', $name)); 
         
-        // Store Google password as a hash (can be random since they don't use a password)
+       
         $googlePasswordHash = password_hash($googleId, PASSWORD_BCRYPT);
         
-        // Insert the new user into the database with Course set as 'Stage 1'
+  
         $insert = $config->prepare("INSERT INTO users (GoogleID, GoogleEmail, Name, Username, Role, GooglePasswordHash, CourseID, Course) VALUES (?, ?, ?, ?, ?, ?, 1, ?)");
         $insert->bind_param("sssssss", $googleId, $email, $name, $username, $role, $googlePasswordHash, $course);
         $insert->execute();
@@ -114,7 +120,7 @@ if (isset($_GET['code'])) {
         $newUserResult = $newUserQuery->get_result();
         $newUser = $newUserResult->fetch_assoc();
 
-        $_SESSION['Username'] = $newUser['Username'] ?? $name; // Use name as a fallback if Username is missing
+        $_SESSION['Username'] = $newUser['Username'] ?? $name; 
         $_SESSION['Role'] = $newUser['Role'];
         $_SESSION['UserID'] = $newUser['UserID'];
         $_SESSION['CourseID'] = $newUser['CourseID'];
@@ -125,9 +131,10 @@ if (isset($_GET['code'])) {
         } elseif ($newUser['Role'] == 'Teacher') {
             header('Location: Mainpage.php');
         } else {
-            header('Location: Mainpage.php'); // Redirect for students
+            header('Location: Mainpage.php'); 
         }
         exit();
     }
 }
 ?>
+

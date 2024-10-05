@@ -2,8 +2,8 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require 'vendor/autoload.php'; // Path to PHPMailer autoload file
-require 'configure.php'; // Include your database connection
+require 'vendor/autoload.php'; 
+require 'configure.php'; 
 
 session_start();
 
@@ -29,33 +29,33 @@ $studentEmail = $student['GoogleEmail'];
 
 // Generate the report (PDF or Word)
 $reportFilePath = 'student_report_' . $studentName . '.pdf';
-include('generate_report.php'); // Make sure this generates the PDF report
+include('generate_report.php'); 
 
 // Send the email using PHPMailer
 $mail = new PHPMailer(true);
 try {
     // Server settings
     $mail->isSMTP();
-    $mail->Host       = 'smtp.your-email-server.com'; // Set your SMTP server
+    $mail->Host       = ''; 
     $mail->SMTPAuth   = true;
-    $mail->Username   = 'your-email@example.com';     // SMTP username
-    $mail->Password   = 'your-email-password';        // SMTP password
+    $mail->Username   = '';   
+    $mail->Password   = '';       
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port       = 587;
 
     // Recipients
     $mail->setFrom('your-email@example.com', 'Your School Name');
-    $mail->addAddress($studentEmail, $studentName); // Add student email
+    $mail->addAddress($studentEmail, $studentName); 
 
     // Attach the report
     $mail->addAttachment($reportFilePath);
 
-    // Content
+  
     $mail->isHTML(true);
     $mail->Subject = 'Your Performance Report';
     $mail->Body    = 'Dear ' . $studentName . ',<br><br>Please find attached your performance report.<br><br>Best regards,<br>Your Teacher';
 
-    // Send the email
+   
     $mail->send();
     echo 'Report shared successfully via email!';
 } catch (Exception $e) {

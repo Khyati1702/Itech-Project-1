@@ -7,7 +7,7 @@ if (!isset($_SESSION['Username']) || ($_SESSION['Role'] != 'Stage1Students' && $
 
 include 'configure.php';
 
-// Determine the student's stage based on their role
+
 $role = $_SESSION['Role'];
 $stage = ($role == 'Stage1Students') ? 'Stage1' : 'Stage2';
 
@@ -24,7 +24,7 @@ $result = $stmt->get_result();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Assignments</title>
-    <link rel="stylesheet" href="view_assignments.css"> <!-- Link to your CSS file -->
+    <link rel="stylesheet" href="view_assignments.css"> 
 </head>
 <body>
     <?php include 'navbar.php'; ?>
@@ -63,14 +63,14 @@ $result = $stmt->get_result();
                     <?php else: ?>
                         <p>No file uploaded</p>
                     <?php endif; ?>
-                    <!-- Submit Assignment Button triggers modal or submission portal -->
+                  
                     <button class="submit-assignment-btn" onclick="openSubmissionPortal(<?php echo $row['AssignmentID']; ?>)">Submit Assignment</button>
                 </div>
             </div>
         <?php endwhile; ?>
     </div>
 
-    <!-- Submission Portal (hidden by default) -->
+  
     <div id="submission-portal" class="submission-modal" style="display:none;">
         <div class="modal-content">
             <span class="close-btn" onclick="closeSubmissionPortal()">&times;</span>

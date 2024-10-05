@@ -9,7 +9,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-image: url(Images/Scenary_background.png); /* Adjust the background image path */
+  background-image: url(Images/Scenary_background.png); 
   background-size: cover;
   background-repeat: no-repeat;
 }
@@ -44,7 +44,7 @@ h1 {
   width: 100%;
   max-width: 800px;
  background: rgba(255, 255, 255, 0.1);
-  /* background: var(--background-color);  */
+ 
   border-radius: 16px;
   backdrop-filter: blur(10px); 
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
@@ -60,7 +60,7 @@ h1 {
 }
 
 .profile-content div {
-  background: rgba(111, 175, 220, 0.2); /* Semi-transparent for the sections */
+  background: rgba(111, 175, 220, 0.2); 
   padding: 20px;
   border-radius: 8px;
   border: 1.5px solid var(--primary-color);
@@ -94,7 +94,7 @@ ul li a:hover {
   text-decoration: none;
 }
 
-/* Adjust the link hover effect */
+
 .reports ul a:hover {
   color: var(--background-color);
 }

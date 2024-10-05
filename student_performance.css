@@ -72,14 +72,14 @@ table {
   border-collapse: collapse;
   margin: 20px 0;
   overflow-x: auto;
-  text-align: center; /* Add horizontal scrolling for small screens */
+  text-align: center; 
 }
 
 table th, table td {
   border: 2px solid var(--primary-color);
   padding: 8px;
   background-color: var(--third-color);
-  word-wrap: break-word; /* Prevent text from overflowing */
+  word-wrap: break-word; 
 }
 
 table th {
@@ -138,7 +138,7 @@ td .update-grade-form {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px; /* Space between inputs and button */
+  gap: 10px; 
 }
 
 /* Style for the grade input field */
@@ -186,7 +186,7 @@ td .update-grade-form button:hover {
   }
 
   h1, h2, h3 {
-    font-size: 1.2rem; /* Smaller font sizes for headers */
+    font-size: 1.2rem; 
   }
 
   section {
@@ -212,7 +212,7 @@ td .update-grade-form button:hover {
 
   .btn {
     width: 100%;
-    margin-bottom: 10px; /* Stack buttons vertically with space */
+    margin-bottom: 10px; 
     text-align: center;
   }
 

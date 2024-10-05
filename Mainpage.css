@@ -9,7 +9,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-image: url(Images/Scenary_background.png); /* Changed "Eximages" to "Images" */
+  background-image: url(Images/Scenary_background.png); 
   border: solid 2px var(--third-color);
 }
 

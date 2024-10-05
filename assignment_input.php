@@ -54,25 +54,25 @@ if (!$students) {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($view == 'student' && $student_id) {
-        // Base query to insert grades
+        //  query to insert grades
         $query_base = "INSERT INTO gradings (StudentID, TeacherID, GradingTimestamp";
         $query_values = " VALUES (?, ?, NOW()";
         $query_update = " ON DUPLICATE KEY UPDATE GradingTimestamp = NOW()";
         $params = [$student_id, $teacher_id];
-        $types = "ii"; // 'i' for integers (StudentID, TeacherID)
+        $types = "ii";
 
-        // Loop through each assessment and process the input
+       
         foreach ($assessments as $assessment) {
             $grade = isset($_POST[str_replace(' ', '_', $assessment)]) ? $_POST[str_replace(' ', '_', $assessment)] : null;
             $comment = isset($_POST[str_replace(' ', '_', $assessment) . '_comment']) ? $_POST[str_replace(' ', '_', $assessment) . '_comment'] : null;
 
             // Only process if the grade or comment is provided
-            if ($grade !== null && $grade !== '') { // Ensure we don't insert empty values
+            if ($grade !== null && $grade !== '') { 
                 $query_base .= ", `$assessment`";
                 $query_values .= ", ?";
                 $query_update .= ", `$assessment` = VALUES(`$assessment`)";
                 $params[] = $grade;
-                $types .= "d"; // 'd' for decimal (grade)
+                $types .= "d";
             }
 
             if ($comment !== null && $comment !== '') {
@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $query_values .= ", ?";
                 $query_update .= ", `Comments_$assessment` = VALUES(`Comments_$assessment`)";
                 $params[] = $comment;
-                $types .= "s"; // 's' for string (comment)
+                $types .= "s"; 
             }
         }
 
@@ -90,13 +90,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $query_values .= ", ?";
             $query_update .= ", `TeacherNote` = VALUES(`TeacherNote`)";
             $params[] = $_POST['teacher_notes'];
-            $types .= "s"; // 's' for string (teacher note)
+            $types .= "s"; 
         }
 
         // Combine the base query, values, and update clause
         $query = $query_base . ")" . $query_values . ")" . $query_update;
 
-        // Prepare and execute the statement
+       
         $stmt = $config->prepare($query);
         if (!$stmt) {
             die("Query preparation failed: " . $config->error);
@@ -122,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if ($comment === '') $comment = null;
 
                 // Insert or update the grade and comment
-                if ($grade !== null || $comment !== null) { // Only process if grade or comment is provided
+                if ($grade !== null || $comment !== null) { 
                     $update_query = $config->prepare("
                         INSERT INTO gradings (StudentID, TeacherID, `$assessment_name`, `Comments_$assessment_name`, GradingTimestamp) 
                         VALUES (?, ?, ?, ?, NOW())

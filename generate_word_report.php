@@ -44,7 +44,7 @@ $teacherQuery->bind_param("i", $_SESSION['UserID']);
 $teacherQuery->execute();
 $teacherResult = $teacherQuery->get_result();
 $teacher = $teacherResult->fetch_assoc();
-$teacherName = $teacher['Name'] ?? 'N/A'; // Use 'N/A' if teacher's name is not found
+$teacherName = $teacher['Name'] ?? 'N/A'; 
 
 // Fetch grades from the gradings table
 $gradesQuery = $config->prepare("SELECT * FROM gradings WHERE StudentID = ? ORDER BY GradingTimestamp DESC LIMIT 1");
@@ -58,7 +58,7 @@ if (!$grades) {
     exit();
 }
 
-$teacherNote = $grades['TeacherNote'] ?? 'No notes available'; // Handle null values for TeacherNote
+$teacherNote = $grades['TeacherNote'] ?? 'No notes available'; 
 
 // Initialize PhpWord object
 $phpWord = new PhpWord();
@@ -76,7 +76,7 @@ if ($studentRole == 'Stage1Students') {
         'borderSize' => 6, 
         'borderColor' => '000000', 
         'alignment' => 'center',
-        'width' => 100 * 50, // 100% width
+        'width' => 100 * 50, 
     ]);
 
     $table->addRow();
@@ -93,7 +93,7 @@ if ($studentRole == 'Stage1Students') {
         'borderSize' => 6, 
         'borderColor' => '000000', 
         'alignment' => 'center',
-        'width' => 100 * 50, // 100% width
+        'width' => 100 * 50, 
     ]);
 
     // Add Header Row
@@ -123,12 +123,12 @@ if ($studentRole == 'Stage1Students') {
     $table->addCell(2000)->addText($grades['Investigation_Task_Part_B'] ?? 'N/A');
 
     // Add Total Grade Section
-    $section->addTextBreak(3); // Add margin from top
+    $section->addTextBreak(3); 
     $table = $section->addTable([
         'borderSize' => 6, 
         'borderColor' => '000000', 
         'alignment' => 'center',
-        'width' => 50 * 60, // Smaller width for the table
+        'width' => 50 * 60, 
     ]);
 
     // Add a row with a single cell for the Total Grade
@@ -138,10 +138,10 @@ if ($studentRole == 'Stage1Students') {
                   ($grades['Investigation_Task_Part_A'] ?? 0) + 
                   ($grades['Investigation_Task_Part_B'] ?? 0);
 
-    $row = $table->addRow(Converter::cmToTwip(2.5)); // Increase height (2.5 cm)
-    $cell = $row->addCell(Converter::cmToTwip(6)); // Set a smaller width (6 cm)
+    $row = $table->addRow(Converter::cmToTwip(2.5)); 
+    $cell = $row->addCell(Converter::cmToTwip(6)); 
     $cell->addText('Total Grade: ' . number_format($totalGrade, 2), ['bold' => true, 'size' => 14], ['alignment' => 'center']);
-    $cell->getStyle()->setVAlign('center'); // Center vertically
+    $cell->getStyle()->setVAlign('center'); 
 
     // Add Teacher Notes Section
     $section->addText('TEACHER NOTES:', ['bold' => true]);
@@ -149,7 +149,7 @@ if ($studentRole == 'Stage1Students') {
         'borderSize' => 6, 
         'borderColor' => '000000', 
         'alignment' => 'center',
-        'width' => 100 * 50, // 100% width
+        'width' => 100 * 50, 
     ]);
     $table->addRow();
     $table->addCell(9000)->addText($teacherNote);
@@ -165,7 +165,7 @@ if ($studentRole == 'Stage1Students') {
         'borderSize' => 6, 
         'borderColor' => '000000', 
         'alignment' => 'center',
-        'width' => 100 * 50, // 100% width
+        'width' => 100 * 50, 
     ]);
 
     $table->addRow();
@@ -182,7 +182,7 @@ if ($studentRole == 'Stage1Students') {
         'borderSize' => 6, 
         'borderColor' => '000000', 
         'alignment' => 'center',
-        'width' => 100 * 50, // 100% width
+        'width' => 100 * 50, 
     ]);
 
     // Add Header Row
@@ -223,12 +223,12 @@ if ($studentRole == 'Stage1Students') {
     $table->addCell(2000)->addText($grades['Response_English'] ?? 'N/A');
 
     // Add Total Grade Section
-    $section->addTextBreak(3); // Add margin from top
+    $section->addTextBreak(3); 
     $table = $section->addTable([
         'borderSize' => 6, 
         'borderColor' => '000000', 
         'alignment' => 'center',
-        'width' => 50 * 60, // Smaller width for the table
+        'width' => 50 * 60, 
     ]);
 
     // Add a row with a single cell for the Total Grade
@@ -239,10 +239,10 @@ if ($studentRole == 'Stage1Students') {
                   ($grades['Response_Japanese'] ?? 0) + 
                   ($grades['Response_English'] ?? 0);
 
-    $row = $table->addRow(Converter::cmToTwip(2.5)); // Increase height (2.5 cm)
-    $cell = $row->addCell(Converter::cmToTwip(6)); // Set a smaller width (6 cm)
+    $row = $table->addRow(Converter::cmToTwip(2.5)); 
+    $cell = $row->addCell(Converter::cmToTwip(6)); 
     $cell->addText('Total Grade: ' . number_format($totalGrade, 2), ['bold' => true, 'size' => 14], ['alignment' => 'center']);
-    $cell->getStyle()->setVAlign('center'); // Center vertically
+    $cell->getStyle()->setVAlign('center'); 
 
     // Add Teacher Notes Section
     $section->addText('TEACHER NOTES:', ['bold' => true]);
@@ -250,7 +250,7 @@ if ($studentRole == 'Stage1Students') {
         'borderSize' => 6, 
         'borderColor' => '000000', 
         'alignment' => 'center',
-        'width' => 100 * 50, // 100% width
+        'width' => 100 * 50, 
     ]);
     $table->addRow();
     $table->addCell(9000)->addText($teacherNote);

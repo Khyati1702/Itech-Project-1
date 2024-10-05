@@ -14,7 +14,7 @@ include 'configure.php';
 $username = $_SESSION['Username'];
 $role = $_SESSION['Role'];
 
-// Fetch the CourseID for the logged-in user (either a teacher or a student)
+// Fetch the CourseID for the logged-in user
 $courseQuery = $config->prepare("SELECT CourseID FROM users WHERE Username = ?");
 $courseQuery->bind_param("s", $username);
 $courseQuery->execute();
@@ -29,6 +29,21 @@ if (!$CourseID) {
 
 // Set default filters
 $searchQuery = isset($_GET['search_query']) ? $_GET['search_query'] : '';
+$assignmentField = isset($_GET['assignment_field']) ? $_GET['assignment_field'] : null;
+$statType = isset($_GET['stat_type']) ? $_GET['stat_type'] : 'max'; 
+$threshold = isset($_GET['threshold']) ? $_GET['threshold'] : null; 
+
+// Define the available assignment fields
+$assignmentFields = [
+    'Interaction' => 'Interaction',
+    'Text_Analysis' => 'Text Analysis',
+    'Text_Production' => 'Text Production',
+    'Investigation_Task_Part_A' => 'Investigation Task Part A',
+    'Investigation_Task_Part_B' => 'Investigation Task Part B',
+    'Oral_Presentation' => 'Oral Presentation',
+    'Response_Japanese' => 'Response Japanese',
+    'Response_English' => 'Response English',
+];
 
 // Build the query for students
 if ($role == 'Teacher') {
@@ -38,11 +53,11 @@ if ($role == 'Teacher') {
         WHERE u.Role IN ('Stage1Students', 'Stage2Students') 
         AND u.CourseID = ? ";
 
-    // Modify the query to search by name or course with the same search input
+    
     if (!empty($searchQuery)) {
         $query .= "AND (u.Name LIKE ? OR u.Course LIKE ?) ";
     }
-    
+
     $stmt = $config->prepare($query);
 
     // Bind parameters conditionally
@@ -56,17 +71,71 @@ if ($role == 'Teacher') {
     $stmt->execute();
     $result = $stmt->get_result();
 
-    // Fetch groups for the teacher
-    $groupQuery = $config->prepare("
-        SELECT groups.GroupID, groups.GroupName, COUNT(group_members.StudentID) AS StudentCount 
-        FROM groups
-        LEFT JOIN group_members ON groups.GroupID = group_members.GroupID
-        WHERE groups.TeacherID = ?
-        GROUP BY groups.GroupID
-    ");
-    $groupQuery->bind_param("i", $_SESSION['UserID']);
-    $groupQuery->execute();
-    $groupResult = $groupQuery->get_result();
+    // Fetch the selected statistic (max, min, avg, student count, input count, or threshold)
+    if ($assignmentField && array_key_exists($assignmentField, $assignmentFields)) {
+        if ($statType == 'max') {
+            // Query to get the student with the highest marks
+            $statQuery = $config->prepare("
+                SELECT u.Name, g.$assignmentField AS Grade
+                FROM gradings g
+                JOIN users u ON u.UserID = g.StudentID
+                WHERE g.$assignmentField IS NOT NULL
+                ORDER BY g.$assignmentField DESC
+                LIMIT 1
+            ");
+        } elseif ($statType == 'min') {
+            // Query to get the student with the lowest marks
+            $statQuery = $config->prepare("
+                SELECT u.Name, g.$assignmentField AS Grade
+                FROM gradings g
+                JOIN users u ON u.UserID = g.StudentID
+                WHERE g.$assignmentField IS NOT NULL
+                ORDER BY g.$assignmentField ASC
+                LIMIT 1
+            ");
+        } elseif ($statType == 'avg') {
+            // Query to get the average marks for the assignment field
+            $statQuery = $config->prepare("
+                SELECT AVG(g.$assignmentField) AS Grade
+                FROM gradings g
+                WHERE g.$assignmentField IS NOT NULL
+            ");
+        } elseif ($statType == 'student_count') {
+            // Query to get the number of students
+            $statQuery = $config->prepare("
+                SELECT COUNT(DISTINCT g.StudentID) AS StudentCount
+                FROM gradings g
+                WHERE g.$assignmentField IS NOT NULL
+            ");
+        } elseif ($statType == 'input_count') {
+            // Query to get the number of inputs (non-null values for the field)
+            $statQuery = $config->prepare("
+                SELECT COUNT(g.$assignmentField) AS InputCount
+                FROM gradings g
+                WHERE g.$assignmentField IS NOT NULL
+            ");
+        } elseif ($statType == 'threshold' && $threshold !== null) {
+            // Query to get all students above or equal to the threshold
+            $statQuery = $config->prepare("
+                SELECT u.Name, g.$assignmentField AS Grade
+                FROM gradings g
+                JOIN users u ON u.UserID = g.StudentID
+                WHERE g.$assignmentField IS NOT NULL
+                AND g.$assignmentField >= ?
+            ");
+            $statQuery->bind_param("d", $threshold);
+        }
+
+        if (isset($statQuery)) {
+            $statQuery->execute();
+            $statResult = $statQuery->get_result();
+            $statData = [];
+            while ($row = $statResult->fetch_assoc()) {
+                $statData[] = $row;  
+            }
+        }
+    }
+
 } else {
     // Fetch only the current user's details, including their Name
     $query = "SELECT UserID, Name, Course FROM users WHERE Username = ?";
@@ -89,6 +158,7 @@ if (!$result) {
     <title>Student Profiles</title>
     <link rel="stylesheet" href="Profile.css">
     <link rel="stylesheet" href="colors.css">
+    <link rel="stylesheet" href="statistics.css"> 
 </head>
 <body>
 <?php include 'navbar.php'; ?>
@@ -98,11 +168,13 @@ if (!$result) {
 
     <!-- Search Form (Visible only to Teachers and Admins) -->
     <?php if ($role == 'Teacher' || $role == 'Admin'): ?>
-    <form method="GET" action="">
-        <label class="Search_name" for="search_query">Search by Name or Course:</label>
-        <input type="text" id="search_name" name="search_query" value="<?php echo htmlspecialchars($searchQuery); ?>" placeholder="Enter student name or course">
-        <button type="submit" class="btn-primary_search">Search</button>
-    </form>
+    <div class="form-container">
+        <form method="GET" action="">
+            <label for="search_query">Search by Name or Course:</label>
+            <input type="text" id="search_name" name="search_query" value="<?php echo htmlspecialchars($searchQuery); ?>" placeholder="Enter student name or course">
+            <button type="submit" class="btn-primary_search">Search</button>
+        </form>
+    </div>
     <?php endif; ?>
 
     <!-- Student Table -->
@@ -126,37 +198,71 @@ if (!$result) {
         </tbody>
     </table>
 
-    <?php if ($role == 'Teacher' || $role == 'Admin'): ?>
-        <div class="group-management">
-            <h2>Manage Student Groups</h2>
-            <div class="group-input-container">
-                <form action="create_group.php" method="POST">
-                    <input type="text" name="GroupName" placeholder="Enter Group Name" required>
-                    <button type="submit" class="btn-primary">Create Group</button>
-                </form>
-            </div>
+    <!-- Assignment Statistics Section (Only visible to teachers) -->
+    <?php if ($role == 'Teacher'): ?>
+    <div class="assignment-stats-container">
+        <h2>Assignment Statistics</h2>
+        <div class="form-container">
+            <form method="GET" action="">
+                <label for="assignment_field">Assignment Field:</label>
+                <select name="assignment_field" id="assignment_field">
+                    <option value=""> Select Assignment Field </option>
+                    <?php foreach ($assignmentFields as $field => $label): ?>
+                        <option value="<?php echo $field; ?>" <?php if ($field == $assignmentField) echo 'selected'; ?>>
+                            <?php echo htmlspecialchars($label); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
 
-            <h3>Your Groups</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Group Name</th>
-                        <th>Number of Students</th>
-                        <th>Manage</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while ($group = $groupResult->fetch_assoc()): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($group['GroupName']); ?></td>
-                            <td><?php echo htmlspecialchars($group['StudentCount']); ?></td>
-                            <td><a href="manage_group.php?GroupID=<?php echo $group['GroupID']; ?>">Manage</a></td>
-                        </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
+                <label for="stat_type">Select Statistic:</label>
+                <select name="stat_type" id="stat_type">
+                    <option value="max" <?php if ($statType == 'max') echo 'selected'; ?>>Maximum</option>
+                    <option value="min" <?php if ($statType == 'min') echo 'selected'; ?>>Minimum</option>
+                    <option value="avg" <?php if ($statType == 'avg') echo 'selected'; ?>>Average</option>
+                    <option value="student_count" <?php if ($statType == 'student_count') echo 'selected'; ?>>Number of Students</option>
+                    <option value="input_count" <?php if ($statType == 'input_count') echo 'selected'; ?>>Number of Inputs</option>
+                    <option value="threshold" <?php if ($statType == 'threshold') echo 'selected'; ?>>Threshold Filter</option>
+                </select>
+
+                <!-- Show input for threshold if 'threshold' is selected -->
+                <?php if ($statType == 'threshold'): ?>
+                    <label for="threshold">Enter Threshold:</label>
+                    <input type="number" step="0.01" name="threshold" value="<?php echo htmlspecialchars($threshold); ?>">
+                <?php endif; ?>
+
+                <button type="submit" class="btn-primary_search">Search</button>
+            </form>
         </div>
+
+        <!-- Display the selected statistics -->
+        <?php if ($assignmentField && isset($statData)): ?>
+            <div class="stats-results">
+                <h3><?php echo $assignmentFields[$assignmentField]; ?> Statistics</h3>
+
+                <!-- Display for max/min/average -->
+                <?php if ($statType == 'max' || $statType == 'min' || $statType == 'avg'): ?>
+                    <p><strong><?php echo ucfirst($statType); ?>:</strong> 
+                    <?php echo $statData[0]['Grade'] ?? 'N/A'; ?>
+                    </p>
+                    <?php if ($statType == 'max' || $statType == 'min'): ?>
+                        <p><strong>Student:</strong> <?php echo $statData[0]['Name'] ?? 'N/A'; ?></p>
+                    <?php endif; ?>
+                <?php endif; ?>
+
+                <!-- Display for threshold: show all students who meet the threshold -->
+                <?php if ($statType == 'threshold'): ?>
+                    <h4>Students scoring above or equal to <?php echo $threshold; ?>:</h4>
+                    <ul>
+                        <?php foreach ($statData as $student): ?>
+                            <li><?php echo $student['Name']; ?> - <?php echo $student['Grade']; ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+    </div>
     <?php endif; ?>
+
 </main>
 
 <?php include 'footer.php'; ?>

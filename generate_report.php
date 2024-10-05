@@ -4,7 +4,7 @@ require 'vendor/autoload.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-// Set options for Dompdf
+//  options for Dompdf
 $options = new Options();
 $options->set('isHtml5ParserEnabled', true);
 $options->set('isRemoteEnabled', true);
@@ -24,7 +24,7 @@ if (!isset($_GET['UserID'])) {
     exit();
 }
 
-$UserID = $_GET['UserID']; // Fetch the UserID from GET request
+$UserID = $_GET['UserID']; 
 $loggedInUserRole = $_SESSION['Role'];
 
 // Fetch student information
@@ -57,7 +57,7 @@ if (!$grades) {
     exit();
 }
 
-$teacherNote = $grades['TeacherNote'] ?? 'No notes available'; // Handle null values for TeacherNote
+$teacherNote = $grades['TeacherNote'] ?? 'No notes available'; 
 
 // Calculate Total Grade for the Student
 $totalGradeQuery = "
@@ -67,14 +67,14 @@ $totalGradeQuery = "
          COALESCE(Investigation_Task_Part_A, 0) + COALESCE(Investigation_Task_Part_B, 0) + 
          COALESCE(Oral_Presentation, 0) + COALESCE(Response_Japanese, 0) + COALESCE(Response_English, 0)) AS TotalGrade
     FROM gradings
-    WHERE StudentID = ?"; // Using prepared statement for safety
+    WHERE StudentID = ?"; 
 
 $totalGradeStmt = $config->prepare($totalGradeQuery);
 $totalGradeStmt->bind_param("i", $UserID);
 $totalGradeStmt->execute();
 $totalGradeResult = $totalGradeStmt->get_result();
 $totalGradeData = $totalGradeResult->fetch_assoc();
-$totalGrade = $totalGradeData['TotalGrade'] ?? 'N/A'; // Ensure we handle null TotalGrade
+$totalGrade = $totalGradeData['TotalGrade'] ?? 'N/A'; 
 
 // HTML formatting for Stage 1 or Stage 2 students
 if ($studentRole == 'Stage1Students') {
@@ -164,16 +164,16 @@ if ($studentRole == 'Stage1Students') {
     <div class="teacher-comment-box">' . htmlspecialchars($teacherNote) . '</div>';
 }
 
-// Load HTML into Dompdf
+
 $dompdf->loadHtml($html);
 
-// Set paper size to A4
+
 $dompdf->setPaper('A4', 'portrait');
 
-// Render the PDF
+
 $dompdf->render();
 
-// Stream the PDF to browser for download
+
 $dompdf->stream("student_performance_report.pdf", ["Attachment" => true]);
 
 exit();

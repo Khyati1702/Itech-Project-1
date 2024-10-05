@@ -19,7 +19,7 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin: 20px 0;
-    overflow-x: auto; /* Add horizontal scrolling for small screens */
+    overflow-x: auto;
     text-align: center;
     
   }
@@ -28,7 +28,7 @@ table {
     border: 2px solid var(--primary-color);
     padding: 8px;
     background-color: var(--third-color);
-    word-wrap: break-word; /* Prevent text from overflowing */
+    word-wrap: break-word; 
 
   }
   
@@ -60,54 +60,54 @@ table {
 
 
 tbody td a:hover {
-    background-color: var(--third-color); /* Darker blue on hover */
+    background-color: var(--third-color);
 }
 
 /* Delete button styling */
 .delete_assignment_btn ,.update_dates_btn{
-    background: var(--primary-color); /* Transparent button */
+    background: var(--primary-color); 
     color: var(--text-color);
     padding: 5px 10px;
-    border: solid 3px var(--third-color); /* Glassy border */
-    border-radius: 8px; /* Rounded corners for the button */
+    border: solid 3px var(--third-color); 
+    border-radius: 8px; 
     font-size: 15px;
     cursor: pointer;
-    box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.2), inset 1px 1px 5px rgba(255, 255, 255, 0.2); /* Soft shadow */
+    box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.2), inset 1px 1px 5px rgba(255, 255, 255, 0.2); 
 }
 
 .delete_assignment_btn:hover {
-    background-color: var(--third-color); /* Change background on hover */
-    color: var(--text-color); /* Change text color on hover */
+    background-color: var(--third-color); 
+    color: var(--text-color); 
 }
 .update_dates_btn:hover {
-    background-color: var(--third-color); /* Change background on hover */
-    color: var(--text-color); /* Change text color on hover */
+    background-color: var(--third-color); 
+    color: var(--text-color); 
 }
 
 input[type="date"],
 select {
     padding: 5px 15px;
     margin-bottom: 20px;
-    border: 1px solid var(--heading-color); /* Glassy border */
-    border-radius: 10px; /* Rounded corners */
-    background: var(--third-color); /* Transparent input background */
-    backdrop-filter: blur(5px); /* Slight blur inside inputs */
+    border: 1px solid var(--heading-color); 
+    border-radius: 10px; 
+    background: var(--third-color); 
+    backdrop-filter: blur(5px); 
     -webkit-backdrop-filter: blur(5px);
     font-size: 0.8rem;
-    color: #002147; /* Blue text color for consistency */
-    box-shadow: inset 2px 2px 8px rgba(255, 255, 255, 0.2); /* Inner shadow */
+    color: #002147;
+    box-shadow: inset 2px 2px 8px rgba(255, 255, 255, 0.2); 
 }
 
     input[type="date"]:focus,
     select:focus {
-        border-color: rgba(255, 255, 255, 0.6); /* Brighter on focus */
+        border-color: rgba(255, 255, 255, 0.6); 
         outline: none;
-        box-shadow: 0 0 8px rgba(100, 149, 237, 0.6); /* Light blue glow */
+        box-shadow: 0 0 8px rgba(100, 149, 237, 0.6); 
     }
 /* Centering the table */
 h1 {
     text-align: center;
-    margin: 0 auto; /* Horizontally center */
+    margin: 0 auto; 
     margin-top: 20px;
     margin-bottom: 20px;
     color: var(--heading-color);
@@ -120,7 +120,7 @@ h1 {
 /* Responsive styling for mobile screens */
 @media (max-width: 768px) {
     table {
-        width: 100%; /* Make table take up full width on smaller screens */
+        width: 100%; 
     }
 
     thead th, tbody td {

@@ -1,5 +1,5 @@
 <?php
-// Start the session if it's not already started
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -30,24 +30,24 @@ if (session_status() === PHP_SESSION_NONE) {
                 <a href="Profile.php" class="nav-link">Students</a>
             <?php endif; ?>
 
-            <!-- Dropdown for Assignments (Teachers Only) -->
+            
             <?php if (isset($_SESSION['Role']) && $_SESSION['Role'] == 'Teacher'): ?>
                 <div class="dropdown">
                     <button class="dropbtn nav-link">Assignments</button>
                     <div class="dropdown-content">
                         <a href="upload_assignment.php">Create</a>
                         <a href="manage_assignments.php">Manage</a>
-                        <a href="submissions.php">Submissions</a> <!-- New Submissions link -->
+                        <a href="submissions.php">Submissions</a> 
                     </div>
                 </div>
             <?php elseif ($_SESSION['Role'] == 'Stage1Students' || $_SESSION['Role'] == 'Stage2Students'): ?>
                 <a href="view_assignments.php" class="nav-link">View Assignments</a>
             <?php endif; ?>
-
-            <a href="#" class="nav-link">Contact</a>
+           
+            
             <a href="#" class="nav-link">Help</a>
 
-            <!-- Show Admin Tool button only if the user has Admin role -->
+
             <?php if (isset($_SESSION['Role']) && $_SESSION['Role'] == 'Teacher'): ?>
                 <a href="admin_tool.php" class="nav-link">Admin Tool</a>
             <?php endif; ?>

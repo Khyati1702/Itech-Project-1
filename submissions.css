@@ -1,4 +1,4 @@
-/* General Page Styling */
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -41,6 +41,7 @@ h1 {
 .assignment-selection {
     text-align: center;
     margin: 20px;
+
 }
 
 .assignment-selection select {
@@ -49,6 +50,7 @@ h1 {
     border: 1px solid var(--third-color);
     border-radius: 5px;
     width: 300px;
+    
 }
 
 .assignment-block {
@@ -60,7 +62,7 @@ h1 {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.18);
-    overflow-x: auto; /* Allow scrolling if the table is too wide */
+    overflow-x: auto;
 }
 
 .assignment-block h2 {
@@ -75,7 +77,7 @@ table {
     border-collapse: collapse;
     margin-top: 20px;
     overflow-x: auto;
-    table-layout: auto; /* Make the table layout responsive */
+    table-layout: auto; 
 }
 
 table th, table td {
@@ -113,12 +115,12 @@ a:hover {
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
     .assignment-block {
-        width: 90%; /* Reduce the width on mobile devices */
+        width: 90%; 
     }
     
     table {
         display: block;
-        overflow-x: auto; /* Enable horizontal scrolling on small screens */
-        white-space: nowrap; /* Prevent table from breaking into new lines */
+        overflow-x: auto; 
+        white-space: nowrap; 
     }
 }

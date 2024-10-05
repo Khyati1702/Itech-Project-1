@@ -13,12 +13,12 @@ if (!isset($_SESSION['Role']) || ($_SESSION['Role'] != 'Admin' && $_SESSION['Rol
     exit();
 }
 
-$loggedInUserID = $_SESSION['UserID']; // Get the logged-in user ID
+$loggedInUserID = $_SESSION['UserID']; 
 
-// Fetch all users who have logged in via Google (users with GoogleID set), except for Admins and the logged-in Teacher
+
 $query = "SELECT UserID, Username, Role, GoogleEmail, Course FROM users WHERE GoogleID IS NOT NULL AND Role != 'Admin' AND UserID != ?";
 $stmt = $config->prepare($query);
-$stmt->bind_param("i", $loggedInUserID); // Exclude the logged-in teacher
+$stmt->bind_param("i", $loggedInUserID); 
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -28,7 +28,7 @@ if (!$result) {
 
 // Function to promote a student to Stage 2 and archive Stage 1 grades
 function promoteStudentToStage2($UserID, $config) {
-    // Step 1: Archive Stage 1 grades and change Stage to 'Old_stage1Student' and move TeacherNote to Old_teacherNote
+
     $archiveGradesQuery = $config->prepare("
         INSERT INTO stage1_grades_archive (
             StudentID, TeacherID, Interaction, Text_Analysis, Text_Production, 
