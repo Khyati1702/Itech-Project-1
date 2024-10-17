@@ -166,6 +166,15 @@ if (!$result) {
 <main>
     <h1>Students Enrolled</h1>
 
+    <!-- Add the button to generate and download all reports -->
+    <form action="generate_all_current_reports.php" method="POST">
+        <button type="submit" class="download_report_btn">Generate All Current Reports</button>
+    </form>
+
+    <form action="generate_all_Stage2_reports.php" method="POST">
+        <button type="submit" class="download_report_btn">Generate All Final Reports</button>
+    </form>
+
     <!-- Search Form (Visible only to Teachers and Admins) -->
     <?php if ($role == 'Teacher' || $role == 'Admin'): ?>
     <div class="form-container">

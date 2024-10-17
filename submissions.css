@@ -11,6 +11,8 @@ body {
     min-height: 100vh;
     background-image: url(Images/Scenary_background.png);
     background-size: cover;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
     background-position: center;
     border: solid 2px var(--third-color);
 }

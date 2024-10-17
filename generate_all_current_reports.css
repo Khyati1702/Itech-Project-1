@@ -1,0 +1,88 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-image: url(Images/Scenary_background.png); 
+    border: solid 2px var(--third-color);
+    
+  }
+  
+  main {
+    flex: 1;
+   
+  }
+
+  h1 {
+    color: var(--heading-color);
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 2rem;
+    font-weight: bold;
+    text-shadow: -1px -1px 0 #E0F7FA, 1px -1px 0 #E0F7FA, -1px 1px 0 #E0F7FA, 1px 1px 0 #E0F7FA; 
+}
+
+h2{
+    color: var(--heading-color);
+    padding-top: 20px;
+    margin-bottom: 5px;
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: bold;
+    text-shadow: -1px -1px 0 #E0F7FA, 1px -1px 0 #E0F7FA, -1px 1px 0 #E0F7FA, 1px 1px 0 #E0F7FA; 
+}
+.download-btn {
+    margin-left: 37.5%;
+    padding: 10px 20px;
+    background-color: #e0f7fc; 
+    color: black;
+    font-size: 16px;
+    border: 2.5px solid var(--third-color);
+    border-radius: 10px; 
+    cursor: pointer;
+    max-width: 25%;
+    
+}
+.download-btn:hover {
+    background-color: #c4e6f1; 
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); 
+    transform: translateY(-2px); 
+  
+}
+.student-list {
+    margin-top: 20px;
+}
+
+.student-list {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.student-list ul {
+    list-style: none;
+    padding: 0;
+}
+
+.student-list ul li {
+    margin-bottom: 10px;
+    padding: 15px;
+    background-color: var(--third-color);
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 600px;
+    margin: 10px auto;
+}
+
+.student-list ul li span {
+    font-size: 1.2rem;
+    color: #333;
+    font-weight: bold;
+}
