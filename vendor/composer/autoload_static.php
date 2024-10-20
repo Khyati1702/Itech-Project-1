@@ -52,6 +52,10 @@ class ComposerStaticInit3e6e79e410cd98a8d86f36f772fe3690
             'Monolog\\' => 8,
             'Masterminds\\' => 12,
         ),
+        'L' => 
+        array (
+            'League\\OAuth2\\Client\\' => 21,
+        ),
         'G' => 
         array (
             'GuzzleHttp\\Psr7\\' => 16,
@@ -147,6 +151,11 @@ class ComposerStaticInit3e6e79e410cd98a8d86f36f772fe3690
         'Masterminds\\' => 
         array (
             0 => __DIR__ . '/..' . '/masterminds/html5/src',
+        ),
+        'League\\OAuth2\\Client\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/league/oauth2-client/src',
+            1 => __DIR__ . '/..' . '/league/oauth2-google/src',
         ),
         'GuzzleHttp\\Psr7\\' => 
         array (

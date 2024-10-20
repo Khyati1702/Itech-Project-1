@@ -3,6 +3,10 @@ require 'vendor/autoload.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
+
+// THis code makes a Final PDF report for the stage 2 students , which contains both stage 1 an dstage 2 grades data. 
+
+
 $options = new Options();
 $options->set('isHtml5ParserEnabled', true);
 $options->set('isRemoteEnabled', true);
@@ -24,7 +28,7 @@ if (!isset($_GET['UserID'])) {
 
 $UserID = $_GET['UserID'];
 
-// Fetch student information
+// Fetching student information from databse
 $query = $config->prepare("SELECT Name, Course FROM users WHERE UserID = ?");
 $query->bind_param("i", $UserID);
 $query->execute();
@@ -33,14 +37,14 @@ $student = $result->fetch_assoc();
 $studentName = $student['Name'];
 $studentCourse = $student['Course'];
 
-// Fetch current grades for Stage 2
+// Fetching current grades for Stage 2 from dthe database
 $gradesQuery = $config->prepare("SELECT * FROM gradings WHERE StudentID = ? ORDER BY GradingTimestamp DESC LIMIT 1");
 $gradesQuery->bind_param("i", $UserID);
 $gradesQuery->execute();
 $gradesResult = $gradesQuery->get_result();
 $grades = $gradesResult->fetch_assoc();
 
-// Fetch archived Stage 1 grades for this Stage 2 student
+// Fetch archived Stage 1 grades for this Stage 2 student 
 $archivedQuery = $config->prepare("
     SELECT * 
     FROM stage1_grades_archive 

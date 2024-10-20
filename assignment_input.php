@@ -2,46 +2,54 @@
 session_start();
 require 'configure.php';
 
-// Enable error reporting for debugging
+
+//This page us for the assessment grade input for one assignment all students and all assignments one student.
+
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Check if the user is logged in and is a Teacher or Admin
-if (!isset($_SESSION['Username']) || ($_SESSION['Role'] != 'Teacher' && $_SESSION['Role'] != 'Admin')) {
+// Checking the teacher role
+if (!isset($_SESSION['Username']) || ($_SESSION['Role'] != 'Teacher')) {
     header('Location: LoginPage.php');
     exit();
 }
-
-// Get URL parameters
 $student_id = isset($_GET['student_id']) ? $_GET['student_id'] : null;
 $stage = isset($_GET['stage']) ? $_GET['stage'] : null;
 $assessment_name = isset($_GET['assessment_name']) ? $_GET['assessment_name'] : null;
 $view = isset($_GET['view']) ? $_GET['view'] : null;
-
-// Ensure TeacherID is available
+// Cheking teacher id here
 if (!isset($_SESSION['UserID'])) {
     die('TeacherID is not set. Please log in again.');
 }
 $teacher_id = $_SESSION['UserID'];
 
-// Fetch assessments based on the stage
+// Assignments according ot stage 
 $assessments = [];
 if ($stage == 1) {
     $assessments = [
-        "Interaction", "Text_Analysis", "Text_Production", 
-        "Investigation_Task_Part_A", "Investigation_Task_Part_B"
+        "Interaction" => "Interaction",
+        "Text Analysis" => "Text_Analysis",
+        "Text Production" => "Text_Production",
+        "Investigation Task Part A" => "Investigation_Task_Part_A",
+        "Investigation Task Part B" => "Investigation_Task_Part_B"
     ];
+    //Now the assignment for stage 2
 } elseif ($stage == 2) {
     $assessments = [
-        "Interaction", "Text_Analysis", "Text_Production", 
-        "Oral_Presentation", "Response_Japanese", "Response_English"
+        "Interaction" => "Interaction",
+        "Text Analysis" => "Text_Analysis",
+        "Text Production" => "Text_Production",
+        "Oral Presentation" => "Oral_Presentation",
+        "Response in Japanese" => "Response_Japanese",
+        "Response in English" => "Response_English"
     ];
 } else {
     die('Invalid stage provided.');
 }
 
-// Fetch students based on the stage
+// students according ot stage 
 $students_query = $config->prepare("SELECT UserID, Name FROM users WHERE Role = ?");
 $role = 'Stage' . $stage . 'Students';
 $students_query->bind_param("s", $role);
@@ -54,55 +62,55 @@ if (!$students) {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($view == 'student' && $student_id) {
-        //  query to insert grades
+        // Inserting grades
         $query_base = "INSERT INTO gradings (StudentID, TeacherID, GradingTimestamp";
         $query_values = " VALUES (?, ?, NOW()";
         $query_update = " ON DUPLICATE KEY UPDATE GradingTimestamp = NOW()";
         $params = [$student_id, $teacher_id];
         $types = "ii";
 
-       
-        foreach ($assessments as $assessment) {
-            $grade = isset($_POST[str_replace(' ', '_', $assessment)]) ? $_POST[str_replace(' ', '_', $assessment)] : null;
-            $comment = isset($_POST[str_replace(' ', '_', $assessment) . '_comment']) ? $_POST[str_replace(' ', '_', $assessment) . '_comment'] : null;
+        foreach ($assessments as $displayName => $columnName) {
+            $gradeKey = $columnName;
+            $commentKey = $columnName . '_comment';
 
-            // Only process if the grade or comment is provided
-            if ($grade !== null && $grade !== '') { 
-                $query_base .= ", `$assessment`";
+            $grade = isset($_POST[$gradeKey]) ? $_POST[$gradeKey] : null;
+            $comment = isset($_POST[$commentKey]) ? $_POST[$commentKey] : null;
+
+            // Confirming the input
+            if ($grade !== null && $grade !== '') {
+                $query_base .= ", `$columnName`";
                 $query_values .= ", ?";
-                $query_update .= ", `$assessment` = VALUES(`$assessment`)";
+                $query_update .= ", `$columnName` = VALUES(`$columnName`)";
                 $params[] = $grade;
                 $types .= "d";
             }
-
             if ($comment !== null && $comment !== '') {
-                $query_base .= ", `Comments_$assessment`";
+                $commentColumn = 'Comments_' . $columnName;
+                $query_base .= ", `$commentColumn`";
                 $query_values .= ", ?";
-                $query_update .= ", `Comments_$assessment` = VALUES(`Comments_$assessment`)";
+                $query_update .= ", `$commentColumn` = VALUES(`$commentColumn`)";
                 $params[] = $comment;
-                $types .= "s"; 
+                $types .= "s";
             }
         }
 
-        // Add Teacher Notes if provided
+        // Adding teacher note 
         if (!empty($_POST['teacher_notes'])) {
             $query_base .= ", `TeacherNote`";
             $query_values .= ", ?";
             $query_update .= ", `TeacherNote` = VALUES(`TeacherNote`)";
             $params[] = $_POST['teacher_notes'];
-            $types .= "s"; 
+            $types .= "s";
         }
 
-        // Combine the base query, values, and update clause
         $query = $query_base . ")" . $query_values . ")" . $query_update;
 
-       
         $stmt = $config->prepare($query);
         if (!$stmt) {
             die("Query preparation failed: " . $config->error);
         }
 
-        // Bind the parameters and execute the query
+        // checking and providing confirmation.
         $stmt->bind_param($types, ...$params);
         if ($stmt->execute()) {
             echo "Grades and comments saved successfully!";
@@ -111,27 +119,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
     } elseif ($view == 'assessment' && $assessment_name) {
-        // Handle saving for assessment view (all students for one assessment)
+        if (isset($assessments[$assessment_name])) {
+            $assessment_column = $assessments[$assessment_name];
+        } else {
+            die('Invalid assessment name provided.');
+        }
+
+        // Saving grades for all students for one particular assessment.
         foreach ($_POST as $student_id => $data) {
             if (is_numeric($student_id)) {
                 $grade = $data['grade'] ?? null;
                 $comment = $data['comment'] ?? null;
 
-                // Ensure that empty values are not sent to the database
+       
                 if ($grade === '') $grade = null;
                 if ($comment === '') $comment = null;
 
-                // Insert or update the grade and comment
-                if ($grade !== null || $comment !== null) { 
+                // inserting the grades and comments.
+                if ($grade !== null || $comment !== null) {
                     $update_query = $config->prepare("
-                        INSERT INTO gradings (StudentID, TeacherID, `$assessment_name`, `Comments_$assessment_name`, GradingTimestamp) 
+                        INSERT INTO gradings (StudentID, TeacherID, `$assessment_column`, `Comments_$assessment_column`, GradingTimestamp) 
                         VALUES (?, ?, ?, ?, NOW())
                         ON DUPLICATE KEY UPDATE 
-                            `$assessment_name` = VALUES(`$assessment_name`), 
-                            `Comments_$assessment_name` = VALUES(`Comments_$assessment_name`), 
+                            `$assessment_column` = VALUES(`$assessment_column`), 
+                            `Comments_$assessment_column` = VALUES(`Comments_$assessment_column`), 
                             GradingTimestamp = NOW()");
                     $update_query->bind_param('iiss', $student_id, $teacher_id, $grade, $comment);
-                    $update_query->execute();
+                    if (!$update_query->execute()) {
+                        echo "Error saving grades for student ID $student_id: " . $update_query->error;
+                    }
                 }
             }
         }
@@ -139,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-// Fetch student name for the form
+// Getting the studnet name to show on form. 
 if ($view == 'student' && $student_id) {
     $student_query = $config->prepare("SELECT Name FROM users WHERE UserID = ?");
     $student_query->bind_param("i", $student_id);
@@ -147,6 +163,7 @@ if ($view == 'student' && $student_id) {
     $student_name = $student_query->get_result()->fetch_assoc()['Name'];
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -158,70 +175,68 @@ if ($view == 'student' && $student_id) {
     <link rel="stylesheet" href="assignment_input.css">
 </head>
 <body>
-<?php include 'navbar.php'; ?>
-<script>
-    function toggleMenu() {
-        const nav = document.querySelector('.main-nav');
-        nav.classList.toggle('active');
-        console.log('Menu toggled.');
-    }
-</script>
+    <?php include 'navbar.php'; ?>
+    <script>
+        function toggleMenu() {
+            const nav = document.querySelector('.main-nav');
+            nav.classList.toggle('active');
+            console.log('Menu toggled.');
+        }
+    </script>
 
-<main>
-    <?php if ($view == 'student' && $student_id): ?>
-        <h1>Input Grades for <?php echo htmlspecialchars($student_name); ?></h1>
-        <form method="post">
-            <?php foreach ($assessments as $assessment): ?>
-                <div class="assessment-input">
-                    <label for="<?php echo str_replace(' ', '_', $assessment); ?>" 
-                           class="<?php echo ($stage == 1) ? 'stage1-label' : ''; ?>">
-                        <?php echo str_replace('_', ' ', htmlspecialchars($assessment)); ?>
-                    </label>
-                    <div class="grade-comment">
-                        <input type="number" 
-                               id="<?php echo str_replace(' ', '_', $assessment); ?>" 
-                               name="<?php echo str_replace(' ', '_', $assessment); ?>" 
-                               placeholder="Grade" 
-                               min="1" max="100">
-                        <textarea id="<?php echo str_replace(' ', '_', $assessment) . '_comment'; ?>" 
-                                  name="<?php echo str_replace(' ', '_', $assessment) . '_comment'; ?>" 
-                                  placeholder="Enter Comment"></textarea>
+    <main>
+        <?php if ($view == 'student' && $student_id): ?>
+            <h1>Input Grades for <?php echo htmlspecialchars($student_name); ?></h1>
+            <form method="post">
+                <?php foreach ($assessments as $displayName => $columnName): ?>
+                    <div class="assessment-input">
+                        <label for="<?php echo $columnName; ?>" 
+                               class="<?php echo ($stage == 1) ? 'stage1-label' : ''; ?>">
+                            <?php echo htmlspecialchars($displayName); ?>
+                        </label>
+                        <div class="grade-comment">
+                            <input type="number" 
+                                   id="<?php echo $columnName; ?>" 
+                                   name="<?php echo $columnName; ?>" 
+                                   placeholder="Grade" 
+                                   min="1" max="100">
+                            <textarea id="<?php echo $columnName . '_comment'; ?>" 
+                                      name="<?php echo $columnName . '_comment'; ?>" 
+                                      placeholder="Enter Comment"></textarea>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+                <div class="teacher-notes-section">
+                    <div class="teacher-notes-header">
+                        Teacher Notes
+                    </div>
+                    <div class="teacher-notes-content">
+                        <textarea name="teacher_notes" id="teacher_notes" rows="4" placeholder="Enter your notes here..."></textarea>
                     </div>
                 </div>
-            <?php endforeach; ?>
-            <div class="teacher-notes-section">
-                <div class="teacher-notes-header">
-                    Teacher Notes
-                </div>
-                <div class="teacher-notes-content">
-                    <textarea name="teacher_notes" id="teacher_notes" rows="4" placeholder="Enter your notes here..."></textarea>
-                </div>
-            </div>
-            <button type="submit" class="SaveGrade-button">Save Grades</button>
-        </form>
+                <button type="submit" class="SaveGrade-button">Save Grades</button>
+            </form>
         <?php elseif ($view == 'assessment' && $assessment_name): ?>
-    <h1>Input Grades for <?php echo str_replace('_', ' ', htmlspecialchars($assessment_name)); ?></h1>
-    <form method="post">
-        <div class="assessment-view">
-            <?php while ($student = $students->fetch_assoc()): ?>
-                <div class="student-assessment">
-                    <div class="student-name">
-                        <?php echo htmlspecialchars($student['Name']); ?>
-                    </div>
-                    <div class="grade-comment">
-                        <input type="number" name="<?php echo $student['UserID']; ?>[grade]" placeholder="Grade">
-                        <textarea name="<?php echo $student['UserID']; ?>[comment]" placeholder="Enter Comment"></textarea>
-                    </div>
+            <h1>Input Grades for <?php echo htmlspecialchars($assessment_name); ?></h1>
+            <form method="post">
+                <div class="assessment-view">
+                    <?php while ($student = $students->fetch_assoc()): ?>
+                        <div class="student-assessment">
+                            <div class="student-name">
+                                <?php echo htmlspecialchars($student['Name']); ?>
+                            </div>
+                            <div class="grade-comment">
+                                <input type="number" name="<?php echo $student['UserID']; ?>[grade]" placeholder="Grade">
+                                <textarea name="<?php echo $student['UserID']; ?>[comment]" placeholder="Enter Comment"></textarea>
+                            </div>
+                        </div>
+                    <?php endwhile; ?>
                 </div>
-            <?php endwhile; ?>
-        </div>
-        <button type="submit" class="SaveGrade-button">Save Grades</button>
-    </form>
-<?php endif; ?>
+                <button type="submit" class="SaveGrade-button">Save Grades</button>
+            </form>
+        <?php endif; ?>
+    </main>
 
-</main>
-
-<?php include 'footer.php'; ?>
-
+    <?php include 'footer.php'; ?>
 </body>
 </html>

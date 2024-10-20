@@ -1,6 +1,8 @@
 <?php
 require 'vendor/autoload.php';
 
+//This page generates ALL the PDF report together for the stage 1 and stage 2 current status, means makes reports with stage1 data only if student in stage 1 and stage 2 dtaa only if student in stage 2.
+
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
@@ -12,14 +14,14 @@ if (!isset($_SESSION['Username']) || !in_array($_SESSION['Role'], ['Teacher', 'A
 
 require 'configure.php';
 
-// Set time limit and memory limit for PDF generation
+
 set_time_limit(300);
 ini_set('memory_limit', '256M');
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/logs/error.log'); // Error log
+ini_set('error_log', __DIR__ . '/logs/error.log'); 
 
-// Fetch teacher information (the teacher generating the reports)
+// Fetching teacher information
 $teacherQuery = $config->prepare("SELECT Name FROM users WHERE UserID = ?");
 $teacherQuery->bind_param("i", $_SESSION['UserID']);
 $teacherQuery->execute();
@@ -27,28 +29,29 @@ $teacherResult = $teacherQuery->get_result();
 $teacher = $teacherResult->fetch_assoc();
 $teacherName = $teacher['Name'];
 
-// Fetch all students
+// Fetching all students
 $studentsQuery = "SELECT UserID, Name, Course, Role FROM users WHERE Role IN ('Stage1Students', 'Stage2Students')";
 $studentsResult = $config->query($studentsQuery);
 
-// Create a directory 'uploads/reports' if it doesn't exist
+// Creating a directory
 $reportsDir = __DIR__ . '/uploads/reports';
 if (!file_exists($reportsDir)) {
-    if (!mkdir($reportsDir, 0755, true)) {  // Use 0755 permissions for the new directories
+    if (!mkdir($reportsDir, 0755, true)) {  
         exit('An error occurred while setting up the reports directory.');
     }
 }
 
-// Array to store generated file paths and student names
+// Storing file path and student name here
 $generatedFiles = [];
 $studentNames = [];
 
 while ($student = $studentsResult->fetch_assoc()) {
     $UserID = $student['UserID'];
     $studentName = $student['Name'];
+    $studentCourse = $student['Course'];
     $studentRole = $student['Role'];
 
-    // Fetch the latest grades and teacher notes for the student
+    // Fetching the  grades and teacher notes 
     $gradesQuery = $config->prepare("SELECT * FROM gradings WHERE StudentID = ? ORDER BY GradingTimestamp DESC LIMIT 1");
     $gradesQuery->bind_param("i", $UserID);
     $gradesQuery->execute();
@@ -56,12 +59,12 @@ while ($student = $studentsResult->fetch_assoc()) {
     $grades = $gradesResult->fetch_assoc();
 
     if (!$grades) {
-        continue; // Skip if no grades are available
+        continue; 
     }
 
     $teacherNote = $grades['TeacherNote'] ?? 'No notes available';
 
-    // Calculate Total Grade for the Student
+    // Calculate Total
     $totalGradeQuery = "
         SELECT 
             StudentID,
@@ -78,8 +81,8 @@ while ($student = $studentsResult->fetch_assoc()) {
     $totalGradeData = $totalGradeResult->fetch_assoc();
     $totalGrade = $totalGradeData['TotalGrade'] ?? 'N/A';
 
-    // Generate HTML content based on student role
-    $html = ''; // Initialize HTML variable
+
+    $html = ''; 
 
     if ($studentRole == 'Stage1Students') {
         // For Stage 1 report
@@ -168,7 +171,7 @@ while ($student = $studentsResult->fetch_assoc()) {
     <div class="teacher-comment-box">' . htmlspecialchars($teacherNote) . '</div>';
 }
 
-    // Initialize Dompdf
+    // Using Dompdf
     $options = new Options();
     $options->set('isHtml5ParserEnabled', true);
     $options->set('isRemoteEnabled', true);
@@ -178,7 +181,7 @@ while ($student = $studentsResult->fetch_assoc()) {
     $dompdf->setPaper('A4', 'portrait');
     $dompdf->render();
 
-    // Output the generated PDF to a file
+
     $pdfFileName = 'student_report_' . $UserID . '.pdf';
     $pdfFilePath = $reportsDir . '/' . $pdfFileName;
 
@@ -188,7 +191,7 @@ while ($student = $studentsResult->fetch_assoc()) {
     }
 }
 
-// Close database connections if necessary
+// Closing database connection
 $studentsResult->free();
 ?>
 
@@ -205,10 +208,10 @@ $studentsResult->free();
 <body>
     <h1>Reports Generated</h1>
 
-    <!-- Button to Download All Reports -->
+  
     <button id="downloadAll" class="download-btn">Download All Reports</button>
 
-    <!-- List of Students for whom reports were generated -->
+    
     <div class="student-list">
         <h2>Generated reports for :</h2>
         <ul>
@@ -220,7 +223,7 @@ $studentsResult->free();
         </ul>
     </div>
 
-    <!-- Hidden download links for each report -->
+   
     <div id="downloadLinks" style="display:none;">
         <?php foreach ($generatedFiles as $file): ?>
             <a href="/DraftWebsite/uploads/reports/<?php echo $file; ?>" download="<?php echo $file; ?>"></a>
@@ -231,7 +234,7 @@ $studentsResult->free();
         document.getElementById('downloadAll').addEventListener('click', function() {
             var links = document.querySelectorAll('#downloadLinks a');
             links.forEach(function(link) {
-                link.click();  // Programmatically trigger download for each link
+                link.click();  
             });
         });
     </script>

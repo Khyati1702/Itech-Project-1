@@ -1,8 +1,11 @@
+
 <?php
 session_start();
 require 'configure.php';
 
-// Enable error reporting for debugging
+
+// This is the php for the admin page visible to teachers only 
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -15,7 +18,7 @@ if (!isset($_SESSION['Role']) || $_SESSION['Role'] != 'Teacher') {
 
 $loggedInUserID = $_SESSION['UserID'];
 
-// Fetch teachers (including the current teacher)
+// Fetching teachers 
 $teacherQuery = "SELECT UserID, Name, Role, GoogleEmail FROM users WHERE Role = 'Teacher'";
 $teacherStmt = $config->prepare($teacherQuery);
 $teacherStmt->execute();
@@ -25,7 +28,7 @@ if (!$teacherResult) {
     die("Error fetching teachers: " . $config->error);
 }
 
-// Fetch students (excluding the 'Teacher' role)
+// Fetching students 
 $studentQuery = "SELECT UserID, Name, Role, GoogleEmail FROM users WHERE Role != 'Teacher'";
 $studentStmt = $config->prepare($studentQuery);
 $studentStmt->execute();
@@ -34,29 +37,28 @@ $studentResult = $studentStmt->get_result();
 if (!$studentResult) {
     die("Error fetching students: " . $config->error);
 }
-
-// Handle form submission for adding new users, updating roles, deleting, or promoting
+// Here the handling of submission for the addition, deletion and updating of user done in this
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['add_user'])) {
-        // Handle adding a new user
+        // Adding a new user
         $googleEmail = $_POST['google_email'];
         $role = $_POST['role'];
 
-        // Automatically assign Course based on Role
+        // Assigning a course based on role
         if ($role == 'Stage1Students') {
             $course = 'SACE Stage 1';
         } elseif ($role == 'Stage2Students') {
             $course = 'SACE Stage 2';
         } elseif ($role == 'Teacher') {
-            $course = null; // Teachers may not have a course assigned
+            $course = null; 
         } else {
             $course = null;
         }
 
-        // Set CourseID to 1 for everyone
+        // Setting course ID to 1
         $courseID = 1;
 
-        // Check if the email already exists
+        // Checking dtaabse, if email already exist
         $checkEmailQuery = $config->prepare("SELECT * FROM users WHERE GoogleEmail = ?");
         $checkEmailQuery->bind_param("s", $googleEmail);
         $checkEmailQuery->execute();
@@ -65,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($emailResult->num_rows > 0) {
             $errorMessage = "This Google email is already registered.";
         } else {
-            // Insert the new user with the provided information
+            // Now insert the user tot he database
             $insertUserQuery = $config->prepare("INSERT INTO users (GoogleEmail, Role, Course, CourseID) VALUES (?, ?, ?, ?)");
             $insertUserQuery->bind_param("sssi", $googleEmail, $role, $course, $courseID);
 
@@ -76,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
     } elseif (isset($_POST['delete_user'])) {
-        // Handle user deletion
+        // Deleting the user handling 
         $userId = $_POST['user_id'];
         $deleteQuery = $config->prepare("DELETE FROM users WHERE UserID = ?");
         $deleteQuery->bind_param("i", $userId);
@@ -88,17 +90,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
     } elseif (isset($_POST['update_role'])) {
-        // Handle role update
+        // HAnling the role updating
         $userId = $_POST['user_id'];
         $newRole = $_POST['role'];
 
-        // Automatically assign Course based on Role
+        // Setting th ecourse according ot the role
         if ($newRole == 'Stage1Students') {
             $newCourse = 'SACE Stage 1';
         } elseif ($newRole == 'Stage2Students') {
             $newCourse = 'SACE Stage 2';
         } elseif ($newRole == 'Teacher') {
-            $newCourse = null; // Teachers may not have a course assigned
+            $newCourse = null; 
         } else {
             $newCourse = null;
         }
@@ -123,15 +125,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $successMessage = promoteStudentToStage2($userId, $config);
     }
 
-    // Refresh page to display updated roles
     header("Location: admin_tool.php");
     exit();
 }
 
-// Function to promote a student to Stage 2 and archive Stage 1 grades
+// Function to promote a student to stage 2
 function promoteStudentToStage2($UserID, $config) {
 
-    // Step 1: Archive Stage 1 grades
     $archiveGradesQuery = $config->prepare("
         INSERT INTO stage1_grades_archive (
             StudentID, TeacherID, Interaction, Text_Analysis, Text_Production, 
@@ -157,9 +157,7 @@ function promoteStudentToStage2($UserID, $config) {
         die("Execute failed for archiving grades: (" . $archiveGradesQuery->errno . ") " . $archiveGradesQuery->error);
     }
 
-    // Step 2: (Removed deletion of Stage 1 grades from 'gradings' table)
 
-    // Step 3: End Stage 1 in student_stages
     $endStage1Query = $config->prepare("UPDATE student_stages SET EndDate = CURDATE() WHERE UserID = ? AND Stage = 'Stage1Students' AND EndDate IS NULL");
     if (!$endStage1Query) {
         die("Prepare failed for ending Stage 1: (" . $config->errno . ") " . $config->error);
@@ -169,7 +167,6 @@ function promoteStudentToStage2($UserID, $config) {
         die("Execute failed for ending Stage 1: (" . $endStage1Query->errno . ") " . $endStage1Query->error);
     }
 
-    // Step 4: Insert new record for Stage 2 in student_stages
     $insertStage2Query = $config->prepare("INSERT INTO student_stages (UserID, Stage, StartDate) VALUES (?, 'Stage2Students', CURDATE())");
     if (!$insertStage2Query) {
         die("Prepare failed for inserting Stage 2: (" . $config->errno . ") " . $config->error);
@@ -178,8 +175,6 @@ function promoteStudentToStage2($UserID, $config) {
     if (!$insertStage2Query->execute()) {
         die("Execute failed for inserting Stage 2: (" . $insertStage2Query->errno . ") " . $insertStage2Query->error);
     }
-
-    // Step 5: Update the users table to reflect Stage 2
     $updateUserStage = $config->prepare("UPDATE users SET Role = 'Stage2Students', Course = 'SACE Stage 2' WHERE UserID = ?");
     if (!$updateUserStage) {
         die("Prepare failed for updating user role: (" . $config->errno . ") " . $config->error);
@@ -211,7 +206,7 @@ function promoteStudentToStage2($UserID, $config) {
         <p class="error-message"><?php echo $errorMessage; ?></p>
     <?php endif; ?>
 
-    <!-- Section to Add New Users -->
+
     <section id="add-user-section" class="admin-tool-section">
         <h2 id="add-user-title">Add New User</h2>
         <form method="POST" action="admin_tool.php" class="add-user-form">
@@ -231,7 +226,7 @@ function promoteStudentToStage2($UserID, $config) {
         </form>
     </section>
 
-    <!-- Section to Manage Teachers -->
+
     <section id="manage-teachers-section" class="admin-tool-section">
         <h2 id="manage-teachers-title">Manage Teachers</h2>
         <div class="table-responsive">
@@ -247,7 +242,7 @@ function promoteStudentToStage2($UserID, $config) {
                 </thead>
                 <tbody>
                     <?php
-                    // Re-fetch teachers to get the latest data
+          
                     $teacherStmt->execute();
                     $teacherResult = $teacherStmt->get_result();
                     while ($row = $teacherResult->fetch_assoc()) :
@@ -260,7 +255,7 @@ function promoteStudentToStage2($UserID, $config) {
                                 <form method="POST" action="admin_tool.php" class="update-form">
                                     <input type="hidden" name="user_id" value="<?php echo $row['UserID']; ?>">
 
-                                    <!-- Role Dropdown -->
+                    
                                     <select name="role" class="role-select" onchange="confirmRoleChange(this)">
                                         <option value="Teacher" <?php if ($row['Role'] == 'Teacher') echo 'selected'; ?>>Teacher</option>
                                         <option value="Stage1Students" <?php if ($row['Role'] == 'Stage1Students') echo 'selected'; ?>>Stage 1 Student</option>
@@ -283,7 +278,7 @@ function promoteStudentToStage2($UserID, $config) {
         </div>
     </section>
 
-    <!-- Section to Manage Students -->
+
     <section id="manage-students-section" class="admin-tool-section">
         <h2 id="manage-students-title">Manage Students</h2>
         <div class="table-responsive">
@@ -299,7 +294,7 @@ function promoteStudentToStage2($UserID, $config) {
                 </thead>
                 <tbody>
                     <?php
-                    // Re-fetch students to get the latest data
+                   
                     $studentStmt->execute();
                     $studentResult = $studentStmt->get_result();
                     while ($row = $studentResult->fetch_assoc()) :
@@ -312,7 +307,7 @@ function promoteStudentToStage2($UserID, $config) {
                                 <form method="POST" action="admin_tool.php" class="update-form">
                                     <input type="hidden" name="user_id" value="<?php echo $row['UserID']; ?>">
 
-                                    <!-- Role Dropdown -->
+                     
                                     <select name="role" class="role-select" onchange="confirmRoleChange(this)">
                                         <option value="Stage1Students" <?php if ($row['Role'] == 'Stage1Students') echo 'selected'; ?>>Stage 1 Student</option>
                                         <option value="Stage2Students" <?php if ($row['Role'] == 'Stage2Students') echo 'selected'; ?>>Stage 2 Student</option>
@@ -342,7 +337,7 @@ function promoteStudentToStage2($UserID, $config) {
 
 <?php include 'footer.php'; ?>
 
-<!-- JavaScript to confirm role change -->
+
 <script>
 function confirmRoleChange(selectElement) {
     var previousValue = selectElement.getAttribute('data-previous-value') || selectElement.defaultValue;
@@ -351,10 +346,10 @@ function confirmRoleChange(selectElement) {
     if (previousValue !== newValue) {
         var confirmChange = confirm('Are you sure you want to change the role from "' + previousValue + '" to "' + newValue + '"?');
         if (!confirmChange) {
-            // Revert to previous value
+       
             selectElement.value = previousValue;
         } else {
-            // Update the previous value attribute
+       
             selectElement.setAttribute('data-previous-value', newValue);
         }
     }

@@ -12,6 +12,8 @@ body {
   background-image: url(Images/Scenary_background.png); 
   background-size: cover;
   background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center; 
 }
 
 main {
@@ -28,9 +30,6 @@ h1 {
   color: var(--heading-color);
   opacity: 0;
   transform: translateY(20px);
-  animation: fadeInSlideUp 2s forwards;
-  
-  
 }
 
 @keyframes fadeInSlideUp {

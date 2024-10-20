@@ -3,7 +3,7 @@ session_start();
 require 'configure.php';
 
 
-
+//This page is the student performance page , it shows the student grades , teacher notes and also archeived grades for the student if the student is in stage 2. Also it contains button to download the Current and Final PDF reports. 
 
 if (!isset($_SESSION['Username'])) {
     header('Location: LoginPage.php');
@@ -41,7 +41,7 @@ $stage2Assessments = [
 
 
 $assessments = ($studentRole == 'Stage1Students') ? $stage1Assessments : $stage2Assessments;
-
+// Getting the grades for the student 
 
 $gradesQuery = $config->prepare("
     SELECT * 
@@ -54,7 +54,7 @@ $gradesQuery->execute();
 $gradesResult = $gradesQuery->get_result();
 $grades = $gradesResult->fetch_assoc();
 
-
+// This is used to get the archeived grades for the student who are in stage 2.
 $archivedGrades = null;
 if ($studentRole == 'Stage2Students') {
     $archivedQuery = $config->prepare("
@@ -112,48 +112,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_grade']) && ($l
     <title>Student Performance</title>
     <link rel="stylesheet" href="colors.css">
     <link rel="stylesheet" href="student_performance.css">
-    <style>
-  
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.4);
-        }
-
-        .modal-content {
-            background-color: #fff;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 600px;
-            border-radius: 10px;
-        }
-
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .close:hover,
-        .close:focus {
-            color: #000;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .modal-body {
-            margin-top: 10px;
-        }
-    </style>
 </head>
 <body>
 <?php include 'navbar.php'; ?>
@@ -239,8 +197,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_grade']) && ($l
    
     <?php if ($studentRole == 'Stage2Students' && $archivedGrades): ?>
     <section>
+  
+  
+
+
         <h3>Stage 1 Grades</h3>
-        <table>
+        <table class="archived-grades-table">
             <thead>
                 <tr>
                     <th>Assessment</th>

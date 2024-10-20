@@ -5,9 +5,11 @@ if (!isset($_SESSION['Username']) || $_SESSION['Role'] != 'Teacher') {
     exit();
 }
 
+
+// This page is seeing the submisisons made by the students. 
+
 include 'configure.php';
 
-// Fetch assignments created by the logged-in teacher
 $teacherID = $_SESSION['UserID'];
 $stmt = $config->prepare("SELECT * FROM assignments WHERE TeacherID = ?");
 $stmt->bind_param("i", $teacherID);

@@ -1,4 +1,4 @@
-/* General Reset */
+/* Setting intial values to 0 */
 * {
     margin: 0;
     padding: 0;
@@ -17,10 +17,10 @@ html, body {
 }
 
 .main-content {
-    flex: 1; /* Allows the footer to stick to the bottom */
+    flex: 1; 
 }
 
-/* Header */
+/* css for header */
 .main-header {
     display: flex;
     justify-content: space-between;
@@ -31,7 +31,7 @@ html, body {
     height: auto;
 }
 
-/* Logo Styles */
+/* css for the logo */
 .logo-container {
     display: flex;
     align-items: center;
@@ -39,6 +39,8 @@ html, body {
 
 .logo-container img {
     height: 80px;
+    margin-bottom: 0.1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
     border-radius: 5px;
 }
 
@@ -49,7 +51,7 @@ html, body {
     white-space: nowrap;
 }
 
-/* Navigation Styles */
+/* css for navigation */
 .nav-container {
     display: flex;
     align-items: center;
@@ -78,7 +80,7 @@ html, body {
     background-color: var(--third-color);
 }
 
-/* Dropdown Button */
+/*css for the dropdown list*/
 .dropbtn {
     background-color: var(--primary-color);
     color: var(--text-color);
@@ -91,8 +93,6 @@ html, body {
     text-align: center;
     border: solid 3px var(--third-color);
 }
-
-/* Dropdown Styles */
 .dropdown {
     position: relative;
     display: inline-block;
@@ -124,7 +124,6 @@ html, body {
     background-color: var(--third-color);
 }
 
-/* Show dropdown on hover */
 .dropdown:hover .dropdown-content {
     display: block;
 }
@@ -133,21 +132,7 @@ html, body {
     background-color: var(--third-color);
 }
 
-/* Search and Logout Containers */
-.search-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.search-box input[type="search"] {
-    padding: 5px 10px;
-    border: solid 3px var(--third-color);
-    border-radius: 5px;
-    width: 200px;
-}
-
+/*css for the logout button*/
 #logout-form {
     background-color: transparent;
     border: none;
@@ -167,31 +152,42 @@ html, body {
     align-items: center;
     justify-content: center;
     height: 40px;
+    margin-top: 1px;
 }
 
 #logout-button:hover {
     background-color: var(--third-color);
     color: var(--background-color);
 }
-
+/*css for the footer*/
 .main-footer {
     background-color: var(--background-color);
     color: var(--primary-color);
     padding: 0.5rem 0;
     border: solid 0.5px var(--third-color);
-    margin-top: auto; /* Ensures the footer sticks at the bottom */
+    margin-top: auto;
 }
 
 .footer-content {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
+    align-items: center; 
     text-align: center;
-    padding: 0.25rem 0;
+    padding: 1rem 2rem;
 }
 
-.footer-bottom {
-    text-align: center;
-    padding: 0.1rem 0;
+.quick-links, .address, .footer-center {
+    flex: 1; 
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    justify-content: center; 
+}
+
+.footer-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
 }
 
 .footer-bottom img {
@@ -203,10 +199,11 @@ html, body {
 
 .footer-bottom p {
     font-size: 0.8rem;
+    margin-top: 0.2rem; 
 }
 
 .footer-content h3 {
-    margin-bottom: 0.1rem;
+    margin-bottom: 0.3rem;
 }
 
 .footer-content ul {
@@ -216,7 +213,7 @@ html, body {
 }
 
 .footer-content ul li {
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
 .footer-content ul a {
@@ -224,9 +221,12 @@ html, body {
     text-decoration: none;
 }
 
-
-/* Responsive Styles */
-@media (max-width: 768px) {
+.address p {
+    margin: 0;
+    text-align: center; 
+}
+/* Responsive Styles for the nac bar */
+@media (max-width: 1400px) {
     .main-header {
         flex-wrap: wrap;
     }
@@ -252,12 +252,15 @@ html, body {
         border-top: 1px solid var(--third-color);
         width: 100%;
         text-align: center;
+        margin: 0;
+        border-radius: 2;
+        border: solid 2px var(--third-color);
     }
 
     .dropdown {
         position: relative;
         width: 100%;
-        margin-left: 5px;
+     
     }
 
     .dropdown-content {
@@ -279,8 +282,12 @@ html, body {
     }
 }
 
-@media (min-width: 769px) {
+@media (min-width: 1401px) {
     .menu-toggle {
         display: none;
+    }
+
+    .main-nav {
+        display: flex;
     }
 }

@@ -5,6 +5,8 @@ if (!isset($_SESSION['Username']) || $_SESSION['Role'] != 'Teacher') {
     exit();
 }
 
+// This page is for creating the assignments and linked as create assignment in the navbar. 
+
 include 'configure.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -15,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $dueDate = $_POST['due_date']; 
     $teacherID = $_SESSION['UserID'];
 
-    // Handle file upload
+    // to upload files
     $filePath = null;
     $uploadDir = 'uploads/assignments/';  
 
@@ -40,9 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $stmt->bind_param("issssss", $teacherID, $stage, $title, $description, $filePath, $startDate, $dueDate);
 
     if ($stmt->execute()) {
-        echo "Assignment created successfully!";
+        echo "Created successfully!";
     } else {
-        echo "Error creating assignment.";
+        echo "Error during creation.";
     }
 }
 ?>
@@ -62,14 +64,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <h1 class="create-assignment-title">Create Assignment</h1>
 
     <form class="create-assignment-form" action="upload_assignment.php" method="POST" enctype="multipart/form-data">
-        <label for="title" class="create-assignment-label">Assignment Title:</label>
-        <input type="text" name="title" id="title" class="create-assignment-input" required>
+        
+    <label for="title" class="create-assignment-label">Assignment Title:</label>
+     <input type="text" name="title" id="title" class="create-assignment-input" required>
 
-        <label for="description" class="create-assignment-label">Description:</label>
-        <textarea name="description" id="description" class="create-assignment-textarea" required></textarea>
+    <label for="description" class="create-assignment-label">Description:</label>
+    <textarea name="description" id="description" class="create-assignment-textarea" required></textarea>
 
-        <label for="stage" class="create-assignment-label">Select Stage:</label>
-        <select name="stage" id="stage" class="create-assignment-select" required>
+    <label for="stage" class="create-assignment-label">Select Stage:</label> <select name="stage" id="stage" class="create-assignment-select" required>
             <option value="Stage1">Stage 1</option>
             <option value="Stage2">Stage 2</option>
         </select>

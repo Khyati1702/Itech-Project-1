@@ -4,7 +4,9 @@ require 'vendor/autoload.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-//  options for Dompdf
+//This page makes a Current PDF report for the student, means contains only stage 1 grades if student is in stage 1 and stage 2 grades if student is in stage 2.
+
+
 $options = new Options();
 $options->set('isHtml5ParserEnabled', true);
 $options->set('isRemoteEnabled', true);
@@ -27,7 +29,7 @@ if (!isset($_GET['UserID'])) {
 $UserID = $_GET['UserID']; 
 $loggedInUserRole = $_SESSION['Role'];
 
-// Fetch student information
+// Fetching the  student details
 $query = $config->prepare("SELECT Name, Course, Role FROM users WHERE UserID = ?");
 $query->bind_param("i", $UserID);
 $query->execute();
@@ -37,7 +39,7 @@ $studentName = $student['Name'];
 $studentCourse = $student['Course'];
 $studentRole = $student['Role'];
 
-// Fetch teacher name
+// Fetch ing the teacher name
 $teacherQuery = $config->prepare("SELECT Name FROM users WHERE UserID = ?");
 $teacherQuery->bind_param("i", $_SESSION['UserID']);
 $teacherQuery->execute();
@@ -45,7 +47,7 @@ $teacherResult = $teacherQuery->get_result();
 $teacher = $teacherResult->fetch_assoc();
 $teacherName = $teacher['Name'];
 
-// Fetch grades, comments, and teacher notes from gradings table
+// Fetching  grades, comments, and teacher notes from gradings table
 $gradesQuery = $config->prepare("SELECT * FROM gradings WHERE StudentID = ? ORDER BY GradingTimestamp DESC LIMIT 1");
 $gradesQuery->bind_param("i", $UserID);
 $gradesQuery->execute();
@@ -59,7 +61,7 @@ if (!$grades) {
 
 $teacherNote = $grades['TeacherNote'] ?? 'No notes available'; 
 
-// Calculate Total Grade for the Student
+// Calculating the Total 
 $totalGradeQuery = "
     SELECT 
         StudentID,
@@ -76,7 +78,7 @@ $totalGradeResult = $totalGradeStmt->get_result();
 $totalGradeData = $totalGradeResult->fetch_assoc();
 $totalGrade = $totalGradeData['TotalGrade'] ?? 'N/A'; 
 
-// HTML formatting for Stage 1 or Stage 2 students
+
 if ($studentRole == 'Stage1Students') {
     // For Stage 1 report
     $html = '

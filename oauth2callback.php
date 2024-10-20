@@ -4,8 +4,11 @@ require 'configure.php';
 require_once 'vendor/autoload.php';
 use Dotenv\Dotenv;
 
+//This code handles the google callback, uses env variable for security.
+
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
+
 
 define('SESSION_TIMEOUT', 1800);
 
@@ -21,7 +24,7 @@ if (isset($_SESSION['Username'])) {
             exit();
         }
     }
-    // Update the last activity time stamp
+    
     $_SESSION['last_activity'] = time();
 }
 
@@ -56,32 +59,20 @@ if (isset($_GET['code'])) {
     $query->execute();
     $result = $query->get_result();
 
-    // If user exists, log them in and update their information
     if ($result->num_rows > 0) {
         $user = $result->fetch_assoc();
 
-        // Update the user's Name, GoogleID, GooglePasswordHash, and CourseID if not already set
-        $googlePasswordHash = password_hash($googleId, PASSWORD_BCRYPT);
-        $updateUser = $config->prepare("UPDATE users SET Name = ?, GoogleID = ?, GooglePasswordHash = ?, CourseID = 1 WHERE UserID = ?");
-        $updateUser->bind_param("sssi", $name, $googleId, $googlePasswordHash, $user['UserID']);
+        session_regenerate_id(true); 
+
+        // Update the user's Name, GoogleID, and Username if not already set
+        $username = !empty($user['Username']) ? $user['Username'] : strtolower(str_replace(' ', '', $name));
+
+        $updateUser = $config->prepare("UPDATE users SET Name = ?, GoogleID = ?, Username = ?, CourseID = 1 WHERE UserID = ?");
+        $updateUser->bind_param("sssi", $name, $googleId, $username, $user['UserID']);
         $updateUser->execute();
 
-        // Update the user array with the new information
-        $user['Name'] = $name;
-        $user['GoogleID'] = $googleId;
-        $user['GooglePasswordHash'] = $googlePasswordHash;
-        $user['CourseID'] = 1;
-
-        // If Username is empty, generate one
-        if (empty($user['Username'])) {
-            $username = strtolower(str_replace(' ', '', $name));
-            $updateUsername = $config->prepare("UPDATE users SET Username = ? WHERE UserID = ?");
-            $updateUsername->bind_param("si", $username, $user['UserID']);
-            $updateUsername->execute();
-            $user['Username'] = $username;
-        }
-
-        $_SESSION['Username'] = $user['Username'];
+        // Set session variables
+        $_SESSION['Username'] = $username;
         $_SESSION['Role'] = $user['Role'];
         $_SESSION['UserID'] = $user['UserID'];
         $_SESSION['CourseID'] = $user['CourseID'];

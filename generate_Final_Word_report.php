@@ -4,6 +4,8 @@ require 'vendor/autoload.php';
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
 
+// THis code makes a Final word report for the stage 2 students , which contains both stage 1 an dstage 2 grades data. (Button for this present on respective students performance page).
+
 session_start();
 require 'configure.php';
 
@@ -19,7 +21,7 @@ if (!isset($_GET['UserID'])) {
 
 $UserID = $_GET['UserID'];
 
-// Fetch student information
+// Fetchings student information
 $query = $config->prepare("SELECT Name, Course, Role FROM users WHERE UserID = ?");
 $query->bind_param("i", $UserID);
 $query->execute();
@@ -29,14 +31,14 @@ $studentName = $student['Name'];
 $studentCourse = $student['Course'];
 $studentRole = $student['Role'];
 
-// Fetch grades for Stage 2
+// Fetching the  grades for Stage 2
 $gradesQuery = $config->prepare("SELECT * FROM gradings WHERE StudentID = ? ORDER BY GradingTimestamp DESC LIMIT 1");
 $gradesQuery->bind_param("i", $UserID);
 $gradesQuery->execute();
 $gradesResult = $gradesQuery->get_result();
 $grades = $gradesResult->fetch_assoc();
 
-// Fetch archived Stage 1 grades for this Stage 2 student if available
+// Fetching the  archived Stage 1 grades f
 $archivedGrades = null;
 if ($studentRole == 'Stage2Students') {
     $archivedQuery = $config->prepare("
@@ -52,15 +54,15 @@ if ($studentRole == 'Stage2Students') {
     $archivedGrades = $archivedResult->fetch_assoc();
 }
 
-// Create a new PhpWord document
+
 $phpWord = new PhpWord();
 $section = $phpWord->addSection();
 
-// Add Title and Subtitle
+// Adding Title 
 $section->addText('School Report', ['bold' => true, 'size' => 20, 'alignment' => 'center'], ['alignment' => 'center']);
 $section->addTextBreak(1);
 
-// Add Stage 1 Grades (if applicable)
+// Adding the Stage 1 Grades
 if ($archivedGrades) {
     $section->addText('Stage 1: Grade A-E (5 grade rating)', ['bold' => true, 'size' => 14], ['alignment' => 'center']);
     $section->addText('Student Name: ' . htmlspecialchars($studentName), ['bold' => true]);
@@ -95,7 +97,7 @@ if ($archivedGrades) {
     $section->addTextBreak(2);
 }
 
-// Add Stage 2 Grades (if applicable)
+// Adding the  Stage 2 Grade
 if ($grades) {
     $section->addText('Stage 2: Grade A+~E- (15 grade rating)', ['bold' => true, 'size' => 14], ['alignment' => 'center']);
     $section->addText('Student Name: ' . htmlspecialchars($studentName), ['bold' => true]);
@@ -131,7 +133,7 @@ if ($grades) {
     $table->addCell(2000)->addText($grades['TeacherNote'] ?? 'N/A');
 }
 
-// Add abbreviation section
+
 $section->addTextBreak(2);
 $section->addText('Abbreviation', ['bold' => true, 'size' => 12], ['alignment' => 'left']);
 $section->addText('* Inter = Interaction');
@@ -143,12 +145,12 @@ $section->addText('* Oral Pre = Oral Presentation (Stage 2)');
 $section->addText('* Res Jap = Response in Japanese (Stage 2)');
 $section->addText('* Res Eng = Response in English (Stage 2)');
 
-// Save the Word document
+// Saveing the Word document
 $wordFile = 'stage2_student_report_' . htmlspecialchars($studentName) . '.docx';
 $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
 $objWriter->save($wordFile);
 
-// Offer the file for download
+
 header('Content-Description: File Transfer');
 header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
 header('Content-Disposition: attachment; filename="' . basename($wordFile) . '"');
@@ -160,6 +162,6 @@ header('Content-Length: ' . filesize($wordFile));
 flush();
 readfile($wordFile);
 
-// Clean up after download
+
 unlink($wordFile);
 exit();

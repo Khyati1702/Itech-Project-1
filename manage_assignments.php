@@ -1,3 +1,6 @@
+
+
+
 <?php
 session_start();
 if (!isset($_SESSION['Username']) || $_SESSION['Role'] != 'Teacher') {
@@ -5,25 +8,27 @@ if (!isset($_SESSION['Username']) || $_SESSION['Role'] != 'Teacher') {
     exit();
 }
 
+//This page is used to manage the assignments that was created. 
+
 include 'configure.php';
 
-// Handle delete request
+// Handling the DELETING REQ
 if (isset($_POST['delete_assignment'])) {
     $assignmentID = $_POST['assignment_id'];
 
-    // First, delete the file associated with the assignment
+    // Deleting the file of the assignment
     $fileQuery = $config->prepare("SELECT FilePath FROM assignments WHERE AssignmentID = ?");
     $fileQuery->bind_param("i", $assignmentID);
     $fileQuery->execute();
     $fileResult = $fileQuery->get_result();
     $fileData = $fileResult->fetch_assoc();
 
-    // Check if FilePath is not empty and exists before attempting to delete the file
+    // Check if the file is ther or not
     if (!empty($fileData['FilePath']) && file_exists($fileData['FilePath'])) {
         unlink($fileData['FilePath']); 
     }
 
-    // Now delete the assignment from the database
+    // Deleing the assignment from database
     $deleteStmt = $config->prepare("DELETE FROM assignments WHERE AssignmentID = ?");
     $deleteStmt->bind_param("i", $assignmentID);
     

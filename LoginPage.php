@@ -1,8 +1,10 @@
 <?php
+
 session_start();
 require 'configure.php';
 require_once 'vendor/autoload.php';
 use Dotenv\Dotenv;
+// This is the login page of the website.
 
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
@@ -14,18 +16,19 @@ $googleClient->setRedirectUri($_ENV['GOOGLE_REDIRECT_URI']);
 $googleClient->addScope("email");
 $googleClient->addScope("profile");
 
-
+// Google Login Handling
 if (isset($_GET['google_login'])) {
-    $googleLoginUrl = $googleClient->createAuthUrl(); // Generate Google OAuth URL
+    $googleLoginUrl = $googleClient->createAuthUrl(); 
     header('Location: ' . filter_var($googleLoginUrl, FILTER_SANITIZE_URL)); 
     exit();
 }
 
+// Manual Login Handling
 if (isset($_POST['submit_btn'])) {
     $username = $_POST['username'];
     $loginpass = $_POST['password'];
 
-    // Check if user exists in the database
+    // Checking  if user exists in the database
     $select = "SELECT * FROM users WHERE Username=?";
     $stmt = $config->prepare($select);
     $stmt->bind_param("s", $username);
@@ -35,9 +38,10 @@ if (isset($_POST['submit_btn'])) {
     if ($result->num_rows == 1) {
         $user = $result->fetch_assoc();
 
-        // Verify password (if hashed)
-        if (password_verify($loginpass, $user['PasswordHash']) || $loginpass === $user['Password']) {
-            // Set session and redirect based on role
+        // Verify password for the manual login
+        if (password_verify($loginpass, $user['PasswordHash'])) {
+          
+            session_regenerate_id(true);
             $_SESSION['Username'] = $user['Username'];
             $_SESSION['Role'] = $user['Role'];
             $_SESSION['UserID'] = $user['UserID'];
@@ -78,12 +82,13 @@ if (isset($_POST['submit_btn'])) {
         <hr id="horizontalline">
 
         <h1 id="logintitle">Login</h1>
-        <form action="" method="POST">
+        <form action="LoginPage.php" method="POST">
             <div class="googleicon">
                 <a href="?google_login=true" class="gsi-material-button">
                     <div class="gsi-material-button-state"></div>
                     <div class="gsi-material-button-content-wrapper">
                         <div class="gsi-material-button-icon">
+                    
                             <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" xmlns:xlink="http://www.w3.org/1999/xlink" style="display: block;">
                                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
                                 <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
@@ -99,11 +104,11 @@ if (isset($_POST['submit_btn'])) {
             <p class="or">---------OR----------</p>
             <div class="forumtext">
                 <i class="fas fa-envelope"></i>
-                <input type="email" id="username" name="username" placeholder="USERNAME" required>
+                <input type="text" id="username" name="username" placeholder="USERNAME" required autocomplete="off">
             </div>
             <div class="forumtext">
                 <i class="fas fa-lock"></i>
-                <input type="password" id="password" name="password" placeholder="PASSWORD" required>
+                <input type="password" id="password" name="password" placeholder="PASSWORD" required autocomplete="off" minlength="8">
                 <i class="fas fa-sign-in"></i>
                 <input class="sbmt" type="submit" id="submitbtn" name="submit_btn" value="Log in">
                 <?php
@@ -112,7 +117,7 @@ if (isset($_POST['submit_btn'])) {
                     unset($_SESSION['error']);
                 }
                 ?>
-                <p id="passwordlost"><a href="#">Lost Password?</a></p>
+            
             </div>
         </form>
     </div>

@@ -1,4 +1,4 @@
-/* General Styles */
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -11,12 +11,14 @@ body {
     flex-direction: column;
     min-height: 100vh;
     background-image: url(Images/Scenary_background.png);
-    background-size: cover;
-    background-repeat: no-repeat;
+    background-repeat: no-repeat; 
+    background-size: cover; 
+    background-position: center; 
+    background-attachment: fixed;
     border: solid 2px var(--third-color);
 }
 
-/* Centering main content */
+
 main {
     display: flex;
     flex-direction: column;
@@ -27,7 +29,7 @@ main {
     margin: 0 auto;
 }
 
-/* Glassmorphism effect on h1 */
+
 h1 {
     text-align: center;
     width: 100%;
@@ -52,7 +54,7 @@ h1 {
     }
 }
 
-/* Glassmorphism effect on the form */
+
 form {
     background: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px); 
@@ -65,7 +67,7 @@ form {
     margin: 0 auto;
 }
 
-/* Form elements */
+
 input, select, textarea {
     width: 100%;
     padding: 8px;
@@ -75,8 +77,8 @@ input, select, textarea {
     backdrop-filter: blur(5px);
 }
 
-/* Button Styles with Glassmorphism */
-button {
+
+.SaveGrade-button{
     background-color: var(--background-color); 
     color: var(--third-color);
     padding: 10px 15px;
@@ -87,12 +89,12 @@ button {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-button:hover {
+.SaveGrade-button:hover {
     background-color: var(--third-color); 
     color: var(--background-color);
 }
 
-/* Assessment Input Styles */
+
 .assessment-input {
     margin-bottom: 15px;
 }
@@ -132,7 +134,7 @@ display: inline-block;
     max-height: 150px; 
 }
 
-/* Styling for Teacher Notes Section */
+
 
 .teacher-notes-header {
     display: block;
@@ -144,7 +146,7 @@ background-color: rgba(111, 175, 220, 0.1);
 display: inline-block;
 }
 
-/* Teacher Notes Textarea Styling */
+
 .teacher-notes-content textarea {
     width: 100%; 
     min-height: 100px; 
@@ -159,7 +161,7 @@ display: inline-block;
 }
 
 
-/* Style the student name */
+
 .student-name {
     display: block;
     margin-bottom: 5px;
@@ -196,7 +198,7 @@ main {
 
 
 
-/* Responsive Styling for Assessment View */
+
 @media (max-width: 768px) {
     table input[type="number"] {
         width: 100%;
